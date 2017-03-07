@@ -32,4 +32,37 @@ Only four laws are required to construct the relationships that control much of 
 
 We'll revisit the first two laws in a bit more detail and then make use of the second law to derive some familiar properties of heat.
 
+\subsection*{Zeroth law:}
+If two systems are each in thermal equilibrium with a third system, then they are in thermal equilibrium with each other. This implies that they have some property in common. We call this property \emph{temperature}. (In the language of mathematics, thermal equilibrium is a transitive property.)
+
+It is worth noting that thermal equilibrium is not the same as thermodynamic equilibrium. For the latter we also need mechanical equilibrium ($p_1=p_2$) and chemical equilibrium ($\mu_1=\mu_1$ --- equal rates of reaction).
+
+\subsection*{First Law:}
+Energy remains constant for a (collection of) system(s) isolated from the surroundings. When a system interacts with its surroundings any increase in the energy of the system is equal to the work done on the system by the surroundings. (We denote work done \emph{on} the system as $W>0$, similarly, heat supplied to the system is denoted $Q>0$.)
+
+When considering the change in energy $\Delta E$ of a system it is necessary to consider both work and heat.
+
+E.g. System $A$ gains energy from system $B$, i.e. $\Delta E_A = -\Delta E_B \implies \Delta E_A + \Delta E_B =0$. But, in general, $\Delta E_A\neq W_{B\rightarrow A}$ since there can also be a heat flow $Q_{B\rightarrow A}$ due to a temperature difference.
+So,
+$$\Delta E_A = W_{B\rightarrow A} + Q_{B\rightarrow A}$$
+$$\Delta E_B = W_{A\rightarrow B} + Q_{A\rightarrow B}.$$
+
+Energy conservation gives 
+$$\underbrace{(W_{A\rightarrow B}+W_{B\rightarrow A})}_{\text{Work done by the composite system}} + \underbrace{(Q_{A\rightarrow B}+Q_{B\rightarrow A})}_{\text{Heat flow in the composite system}} = 0$$
+
+In an adiabatic (isolated) system the fist law gives a sort of balance sheet for energy/work/heat:
+$W_{A\rightarrow B}+W_{B\rightarrow A} = 0$ and $Q_{A\rightarrow B}+Q_{B\rightarrow A}$.
+
+Revision: Adiabatic work and heat flow. Quasi-static processes (how slow is slow enough?). Path dependence of work.
+ - see the notes from 315 that are in the repository. You may want to incorporate the relevant content from those notes, or other sources, into this document.
+
+
+The \emph{internal energy} of a system is the energy associated with the internal degrees of freedom of the system. If a system is at rest and the potential energy of any external field is unimportant, then the internal energy of a system is the total energy of a system.
+
+The equation of state for internal energy is usually written $E = E(T,V,N)$ or $E = E(T,P,N)$. Expressing these as infinitesimals (change in internal energy) gives
+$$ dE = \frac{\partial E}{\partial T}\bigg\vert_{V,N}dT + \frac{\partial E}{\partial V}\bigg\vert_{T,N}dV +\frac{\partial E}{\partial N}\bigg\vert_{T,V}dN$$
+a similarly, for the second formulation.
+
+Note $ \frac{\partial E}{\partial T}\vert_{V,N} \neq \frac{\partial E}{\partial T}\vert_{P,N} $
+
 \end{document}
