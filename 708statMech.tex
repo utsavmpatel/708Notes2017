@@ -83,7 +83,7 @@ We can now write $C_P = \frac{\partial E}{\partial T}\vert_{P,N} + \alpha_pPV$.
 
 An alternative way of thinking about $C_P$: constant pressure implies that $PdV = d(PV)$ so that $\delta Q = dE + \underbrace{dPV}_{=dW} = d(E+PV)$. We define the composite quantity $E+PV$ as \emph{enthalpy}, H, with the equation of state $H = H(T,P,N)$.
 
-The infinitesimal for enthalpy is $dH = \underbrace{dE +PdV}_{\delta Q}+ VdP = \delta Q + VdP\vert_{P}$. The last term is zero, since $P$ is constant, so we get $C_P = \frac{\partial Q}{\partial T}\vert_{P,N} = \frac{\partial H}{\partial T}\vert_{P,N} $.
+The infinitesimal for enthalpy is $dH = \underbrace{dE +PdV}_{\delta Q}+ VdP = \delta Q + VdP\vert_{P}$. The last term is zero, since $P$ is constant, so we get $C_P = \frac{\delta Q}{\partial T}\vert_{P,N} = \frac{\partial H}{\partial T}\vert_{P,N} $.
 
 \subsection*{Intensive and extensive variables}
 
@@ -108,7 +108,7 @@ Similarly, if there are significant long range interactions. (E.g.gravity --- it
 It is possible to characterise the state of a thermodynamic system by specifying the values of a set of extensive variables.
 
 \subsection*{The central problem of thermodynamics}
-Given the initial state of equiibrium of several thermodynamic systems that are allowed to interact, determine the final thermodynamic state of equilibrium. (The boundaries of the systems --- adiabatic, closed, open --- determine the types of interactions that are allowed.) We want to pick a final thermodynamic equilibrium state from the space of all possible equilibrium states.
+Given the initial state of equilibrium of several thermodynamic systems that are allowed to interact, determine the final thermodynamic state of equilibrium. (The boundaries of the systems --- adiabatic, closed, open --- determine the types of interactions that are allowed.) We want to pick a final thermodynamic equilibrium state from the space of all possible equilibrium states.
 
 Entropy plays a special role in this problem due to the entropy postulate (the second law of thermodynamics).
 
@@ -118,16 +118,18 @@ Entropy has the following properties:
 \begin{enumerate}
 \item Extensivity: ($S$ is an extensive variable) If 1 and 2 are thermodynamic systems then $S_{1\cup2}=S_1+S_2$.
 \item Convexity: If $X^1=(X_0^1,X_1^1,\ldots,X_r^1)$ and  $X^2=(X_0^2,X_1^2,\ldots,X_r^2)$ are two thermodynamic states of the same system then for $0\leq\alpha\leq1$
-$$ S((1-\alpha)X^1+\alpha X^2)\geq (1-a)S(X^1)+\alpha S(X^2) $$.
+$$ S((1-\alpha)X^1+\alpha X^2)\geq (1-\alpha)S(X^1)+\alpha S(X^2) $$.
 I.e. the entropy of a linear combination of states is greater than or equal to the same linear combination of entropies of the individual states.
 A consequence of this is that if we take derivatives with respect to $\alpha$ at $\alpha=0$ we get
 $$\frac{\partial}{\partial \alpha} S((1-\alpha)X^1+\alpha X^2) = \sum_{i=0}^r\frac{\partial S}{\partial X_i}(X_i^2-X_i^1)$$
 and
-$$\frac{\partial}{\partial \alpha} \left[ (1-\alpha)S(X^1)+\alpha S(X^2) \right] = S(X^2)-S(X^1)$$.
+
+$$\frac{\partial}{\partial \alpha} \left[ (1-\alpha)S(X^1)+\alpha S(X^2) \right] = S(X^2)-S(X^1).$$
+
 So,
 $$ \sum_{i=0}^r\frac{\partial S}{\partial X_i}(X_i^2-X_i^1)\geq  S(X^2)-S(X^1)$$.
 So the entropy surface (as a fn of the other extensive variables) is always below the tangent plane of a point on the surface. We'll use this soon.
-\item Monotonicity: $S(E,X_1,\ldots,X_r)$ is a monotonically increasing function of the internal energy $E$. I.e. $\frac{\partial S}{\partial E}\vert_{X_1,\ldots,x_r} = \frac{1}{T}>0$.
+\item Monotonicity: $S(E,X_1,\ldots,X_r)$ is a monotonically increasing function of the internal energy $E$. I.e. $\frac{\partial S}{\partial E}\vert_{X_1,\ldots,X_r} = \frac{1}{T}>0$.
 \end{enumerate}
 
 Using these three properties, it is possible to find the final equilibrium thermodynamic state amongst the space of possible states. The equilibrium states is the state with maximum entropy that satisfies the constrains on the system. (I.e. Maximum disorder - can also think about this in terms of it being the state with the greatest possible number of corresponding microstates, but we haven't quite got that far yet.)
