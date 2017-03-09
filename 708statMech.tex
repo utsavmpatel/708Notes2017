@@ -8,7 +8,7 @@
 \begin{document}
 \maketitle
 \section{Lecture 1: Thermodynamics}
-We'll start with a quick overview of some of the important concepts from classical thermodynamics. These ideas motivated much of statistical mechanics. This section will also recap some content from 315. 
+We'll start with a quick overview of some of the important concepts from classical thermodynamics. These ideas motivated much of statistical mechanics. This section will also recap some content from 315.
 
 \subsection*{Macroscopic laws of thermodynamics}
 In thermodynamics we study a system --- the part of the world that we are interested in --- that is separated from its surroundings --- the rest of the universe --- by some boundary.
@@ -77,7 +77,7 @@ The first law of thermodynamics (conservation of energy) implies that $\delta Q 
 $C_V = \frac{\delta Q}{\partial T}\vert_{V,N} = \frac{\partial E}{\partial T}\vert_{V,N}$ (since $dV=0$ for fixed V.)
 In the constant pressure case $C_P = \frac{\delta Q}{dT}\vert_{P,N} = \frac{\partial E}{\partial T}\vert_{P,N} + P\frac{\partial V}{\partial T}\vert_{P,N}$.
 
-Constant pressure heat capacity implies that there is a change in volume, so think about how the volume changes. Define the \emph{thermal expansivity} $\alpha_p = \frac{1}{V}\frac{\partial V}{\partial T}\vert_{P,N} \implies V\alpha_p =\frac{\partial V}{\partial T}\vert_{P,N}$.
+Constant pressure heat capacity implies that there is a change in volume, so think about how the volume changes. Define the \emph{volumetric thermal expansivity} $\alpha_p = \frac{1}{V}\frac{\partial V}{\partial T}\vert_{P,N} \implies V\alpha_p =\frac{\partial V}{\partial T}\vert_{P,N}$.
 
 We can now write $C_P = \frac{\partial E}{\partial T}\vert_{P,N} + \alpha_pPV$.
 
@@ -94,6 +94,8 @@ Extensive, or additive, variables are proportionate to the size of a system (i.e
 It is possible to turn an extensive variable into an intensive variable by normalising by the system size. I.e. the variables come in dual pairs, e.g. pressure and volume.
 
 One important extensive variable is the entropy (or disorder) of a system. The dual variable is temperature.
+
+The intensive variable is the derivative of the internal energy with respect to the corresponding extensive variable given all other extensive variables are held constant. For example, $T = \frac{\partial E}{\partial S}\vert_{V,N}$.
 
 Given two systems 1 and 2, an extensive variable for the composite system $1\cup2$ can be found by simply adding the individual extensive variables. E.g. $N_{1\cup2} = N_1 + N_2$, $V_{1\cup2} = V_1 + V_2$, $E_{1\cup2} = E_1 + E_2$ ($E$ = internal energy).
 
@@ -121,7 +123,9 @@ I.e. the entropy of a linear combination of states is greater than or equal to t
 A consequence of this is that if we take derivatives with respect to $\alpha$ at $\alpha=0$ we get
 $$\frac{\partial}{\partial \alpha} S((1-\alpha)X^1+\alpha X^2) = \sum_{i=0}^r\frac{\partial S}{\partial X_i}(X_i^2-X_i^1)$$
 and
-$$\frac{\partial}{\partial \alpha} (1-\alpha)S(X^1)+\alpha S(X^2) = S(X^2)-S(X^1)$$.
+
+$$\frac{\partial}{\partial \alpha} \left[ (1-\alpha)S(X^1)+\alpha S(X^2) \right] = S(X^2)-S(X^1).$$
+
 So,
 $$ \sum_{i=0}^r\frac{\partial S}{\partial X_i}(X_i^2-X_i^1)\geq  S(X^2)-S(X^1)$$.
 So the entropy surface (as a fn of the other extensive variables) is always below the tangent plane of a point on the surface. We'll use this soon.
