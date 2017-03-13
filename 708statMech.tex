@@ -1,6 +1,7 @@
 \documentclass{article}
 \usepackage[utf8]{inputenc}
 \usepackage{amsmath}
+\usepackage{pgfplots}
 
 \newcommand{\calG}{\mathcal{G}}
 
@@ -103,7 +104,7 @@ The intensive variable is the derivative of the internal energy with respect to 
 
 Given two systems 1 and 2, an extensive variable for the composite system $1\cup2$ can be found by simply adding the individual extensive variables. E.g. $N_{1\cup2} = N_1 + N_2$, $V_{1\cup2} = V_1 + V_2$, $E_{1\cup2} = E_1 + E_2$ ($E$ = internal energy).
 
-Actually, the case of internal energy is not entirely correct since there is often an interaction term between the two systems at the interface. I.e. $E_{1\cup2} = E_1+E_2+E_{int}$. Since $E_{int}$ depends on the interface between the two systems it scales like an area as a function of system size, while $E_1$ and $E_2$ will scale like a volume, so typically $\frac{E_{int}}{E_1+E_2}\rightarrow0$ as the system size gets big. E.g. an oil water interface (insert an image?).
+Actually, the case of internal energy is not entirely correct since there is often an interaction term between the two systems at the interface. I.e. $E_{1\cup2} = E_1+E_2+E_{int}$. Since $E_{int}$ depends on the interface between the two systems it scales like an area as a function of system size, while $E_1$ and $E_2$ will scale like a volume, so typically $\frac{E_{int}}{E_1+E_2}\rightarrow0$ as the system size gets big. E.g. an oil water interface.
 
 But this assumption clearly depends on the structural details of the interface. Imagine the oil-water interface in an emulsion like mayonnaise --- in this case the ratio  $\frac{E_{int}}{E_1+E_2}$ is more like $\mathcal{O}(1)$.
 Similarly, if there are significant long range interactions. (E.g.gravity --- it might not work using stat mech to model celestial mechanics.)
@@ -122,16 +123,16 @@ Entropy has the following properties:
 \begin{enumerate}
 \item Extensivity: ($S$ is an extensive variable) If 1 and 2 are thermodynamic systems then $S_{1\cup2}=S_1+S_2$.
 \item Convexity: If $X^1=(X_0^1,X_1^1,\ldots,X_r^1)$ and  $X^2=(X_0^2,X_1^2,\ldots,X_r^2)$ are two thermodynamic states of the same system then for $0\leq\alpha\leq1$
-$$ S((1-\alpha)X^1+\alpha X^2)\geq (1-\alpha)S(X^1)+\alpha S(X^2) $$.
+$$ S((1-\alpha)X^1+\alpha X^2)\geq (1-\alpha)S(X^1)+\alpha S(X^2) $$
 I.e. the entropy of a linear combination of states is greater than or equal to the same linear combination of entropies of the individual states.
 A consequence of this is that if we take derivatives with respect to $\alpha$ at $\alpha=0$ we get
 $$\frac{\partial}{\partial \alpha} S((1-\alpha)X^1+\alpha X^2) = \sum_{i=0}^r\frac{\partial S}{\partial X_i}(X_i^2-X_i^1)$$
 and
 
-$$\frac{\partial}{\partial \alpha} \left[ (1-\alpha)S(X^1)+\alpha S(X^2) \right] = S(X^2)-S(X^1).$$
+$$\frac{\partial}{\partial \alpha} \left[ (1-\alpha)S(X^1)+\alpha S(X^2) \right] = S(X^2)-S(X^1)$$
 
 So,
-$$ \sum_{i=0}^r\frac{\partial S}{\partial X_i}(X_i^2-X_i^1)\geq  S(X^2)-S(X^1).$$
+$$ \sum_{i=0}^r\frac{\partial S}{\partial X_i}(X_i^2-X_i^1)\geq  S(X^2)-S(X^1)$$
 So the entropy surface (as a function of the other extensive variables) is always below the tangent plane of a point on the surface. We'll use this soon.
 \item Monotonicity: $S(E,X_1,\ldots,X_r)$ is a monotonically increasing function of the internal energy $E$. I.e. $\frac{\partial S}{\partial E}\vert_{X_1,\ldots,X_r} = \frac{1}{T}>0$.
 \end{enumerate}
@@ -141,10 +142,10 @@ Using these three properties, it is possible to find the final equilibrium therm
 Worked example. Consider two systems, 1 and 2, in thermal contact such that they can exchange energy, but nothing else (I.e. no other extensive quantities change). The space of possible states is defined by 
 $$E^1+E^2 = X_0^1+X_0^2 = E = \text{const.}$$
 $$X_i^1 = \text{const.}\quad i=1,2,\ldots,r$$
-$$X_i^2 = \text{const.}\quad i=1,2,\ldots,r.$$
+$$X_i^2 = \text{const.}\quad i=1,2,\ldots,r$$
 We want to find the maximum of $S$ as a function of $E^1$ (we could just as well use $E^2$). Start by taking the derivative of $S$.
 
-$$\frac{\partial S}{\partial E^1} = \frac{\partial}{\partial E^1}\left(S^1(E^1,X_1^1,X_2^1,\ldots,X_r^1) + S^2(\underbrace{E-E^1}_{E=E^1+E^2},X_1^2,X_2^2,\ldots,X_r^2) \right) = \frac{\partial S^1}{\partial E^1}\bigg\vert_{E^1} -  \frac{\partial S^2}{\partial E^2}\bigg\vert_{E^2=E-E^1}.$$
+$$\frac{\partial S}{\partial E^1} = \frac{\partial}{\partial E^1}\left(S^1(E^1,X_1^1,X_2^1,\ldots,X_r^1) + S^2(\underbrace{E-E^1}_{E=E^1+E^2},X_1^2,X_2^2,\ldots,X_r^2) \right) = \frac{\partial S^1}{\partial E^1}\bigg\vert_{E^1} -  \frac{\partial S^2}{\partial E^2}\bigg\vert_{E^2=E-E^1}$$
 For $E^1$ at equilibrium we will write $E^1_{eq}$ (sim. for $E^2$). Then to maximise $S$ we must have
 $$\frac{\partial S}{\partial E^1}\bigg\vert_{E^1_{eq}} = \frac{\partial S^1}{\partial E^1}\bigg\vert_{E^1_{eq}} - \frac{\partial S^2}{\partial E^2}\bigg\vert_{E-E^1_{eq}}=0$$
 so $\frac{\partial S^1}{\partial E^1}\vert_{E^1_{eq}} = \frac{\partial S^2}{\partial E^2}\vert_{E_{eq}^2}$. We already have our first result --- the equilibrium state is the one where the change in entropy of the two systems, wrt, $E$ is equal. (The  monotonicity postulate equated this with inverse temperature.)
@@ -185,18 +186,18 @@ The two properties above are easy to see and are not unexpected. More interestin
 
 \begin{eqnarray*}
 	\frac{d}{dx}\calG(x)=\calG'(x)&=&\sum_r rPrx^{r-1},\qquad\text{and}\\
-	\calG''(x)&=&\sum_r r(r-1)P_rx^{r-2}.
+	\calG''(x)&=&\sum_r r(r-1)P_rx^{r-2}
 \end{eqnarray*}
 
 If we evaluate the first derivative of the PGF at 1 we get
-$$\calG'(1) = \sum_r rP_r.$$
+$$\calG'(1) = \sum_r rP_r$$
 The expected value of an arbitrary function $f(r)$ is given by $\langle f(r)\rangle = \sum_r f(r) P(X=r)$, therefore $\calG'(1) = \langle r\rangle$ --- the expected value, or mean, of the distribution.
 
 Similarly,  Evaluating $\calG(x)$ at 1 give 
-$$\calG''(1) = \sum_r r(r-1)P(X=r) = \langle X(X-1)\rangle.$$
+$$\calG''(1) = \sum_r r(r-1)P(X=r) = \langle X(X-1)\rangle$$
 
 Why would we care about being able to find $\langle X(X-1)\rangle = \langle X^2 -X\rangle$? Because the variance of X, is given by 
-$$ V(X) = \langle X^2\rangle -\langle X\rangle^2.$$ We are therefore able to construct $V(X)$ from combinations of $\calG$, $\calG'$, and $\calG''$.
+$$ V(X) = \langle X^2\rangle -\langle X\rangle^2$$ We are therefore able to construct $V(X)$ from combinations of $\calG$, $\calG'$, and $\calG''$.
 We can use the fact that $\langle X^2 -X\rangle =\langle X^2\rangle-\langle X\rangle$ I.e. $\sum(r^2-r)P(X=r)=\sum r^2P(X=r)-\sum rP(X=r)$ to get
 
 \begin{eqnarray}
@@ -218,15 +219,15 @@ The coefficients in the binomial distribution are (not surprisingly) the coeffic
 \begin{eqnarray*}
 	\calG(x)  &=& (xp +q)^N \\
 	\calG'(x) &=& N(xp+p)^{N-1}p\\
-	\calG''(x) &=& N(N-1)(xp+q)^{N-2}p^2. 
+	\calG''(x) &=& N(N-1)(xp+q)^{N-2}p^2
 \end{eqnarray*}
 
 Evaluating the above at $x=1$ gives:
 	\begin{eqnarray*}
-	\calG(1) &=& (p+x)^N = 1 ~\text{ if } p+q=\\
+	\calG(1) &=& (p+x)^N = 1 ~\text{ if } p+q=1\\
 	\calG'(1) &=& N(p+q)^{N-1}P = Np  ~\text{ if } p+q=1\\
 	\calG''(1) &=& N(N-1)(p+q)^{N-2}p^2 \\
-		&=&N(N-1)p^2  ~\text{ if } p+q=1.
+		&=&N(N-1)p^2  ~\text{ if } p+q=1
 \end{eqnarray*}
 As expected, we have $\langle X\rangle =Np$ for the event associated with the probability $p$.
 Similarly, we can calculate the variance of the binomial distribution using equation \ref{eq:binvar}
@@ -234,7 +235,7 @@ Similarly, we can calculate the variance of the binomial distribution using equa
 	V(X) &=&\calG''(1) - \calG'(1) -\calG'(1)^2\\
 		&=& N^2p^2-Np^2+Np-N^2p^2\\
 		&=& N(p-p^2)\\
-		&=& Np(1-p)= Npq.
+		&=& Np(1-p)= Npq
 \end{eqnarray*}
 
 If you are feeling enthusiastic, compare the calculation above with the usual method for finding the variation of the binomial distribution without using a PGF.
@@ -242,7 +243,7 @@ If you are feeling enthusiastic, compare the calculation above with the usual me
 \subsection*{The Poisson distribution}
 Since the Poisson distribution shows up quite often in stat mech, we will have a look at how its properties can be derived via PGFs.
 The Poisson distribution describes the probability of $r$ distinct events occur in a time interval, given that the long-run average rate is $\lambda$ per time interval. It has probabilities given by $P(X=r) = \frac{\lambda^r}{r!}\exp(-\lambda)$. The PGF for the Poisson distribution is given by
-$$G(x) = \sum_r=0^\infty \frac{\lambda^r}{r!}\exp(-\lambda)x^r = \exp(-\lambda)\sum\frac{(\lambda x)^r}{r!}.$$
+$$G(x) = \sum_r=0^\infty \frac{\lambda^r}{r!}\exp(-\lambda)x^r = \exp(-\lambda)\sum\frac{(\lambda x)^r}{r!}$$
 Note that the sum in the last term of the expression above is the power series expansion for the exponential function. Handy --- we can now write:
 \begin{eqnarray*}
 \calG(x) &=& \exp(-\lambda)\exp(\lambda x)\\
@@ -251,7 +252,7 @@ Note that the sum in the last term of the expression above is the power series e
 \end{eqnarray*}
 
 So we have $\langle X \rangle = \calG'(1) = \lambda$, as per the definition, and
-$$V(X) = G''(1) + G'(1) - G'(1)^2 = \lambda^2+\lambda-\lambda^2 = \lambda.$$
+$$V(X) = G''(1) + G'(1) - G'(1)^2 = \lambda^2+\lambda-\lambda^2 = \lambda$$
 
 \subsection*{The expected long-run outcome of a binary process}
 What is the net outcome we can expect from a sequence of $N$ binary events? What is the variance in this net outcome? How long can we expect the net outcome to remain positive? 
@@ -261,19 +262,44 @@ Think of a sequence of coin tosses where heads implies $+1$ and tails implies $-
 If $p=q=\frac12$ then the expected value of $d$ is $\langle d\rangle= 0$. (It's easy to check this: $\langle d\rangle = \langle N-2n\rangle = N-2\langle n\rangle = N-\frac{2}{2}N=0.$)
 
 We want to find the variation in $d$, or rather, the root-mean-squared deviation 
-$$d_{rms} = \left(\langle d^2\rangle - \langle d\rangle^2\right)^{\frac12} =  \langle d^2\rangle^{\frac12}.$$
+$$d_{rms} = \left(\langle d^2\rangle - \langle d\rangle^2\right)^{\frac12} =  \langle d^2\rangle^{\frac12}$$
 
-At this point we'll drop the subscript in $n$ since we only have $n_h$ and since the probabilities are equal. From $d=N-2n$ we have $$ \langle d^2\rangle = \langle (N-2n)^2\rangle = \langle N^2 -4Nn+4n^2\rangle.$$
+At this point we'll drop the subscript in $n$ since we only have $n_h$ and since the probabilities are equal. From $d=N-2n$ we have $$ \langle d^2\rangle = \langle (N-2n)^2\rangle = \langle N^2 -4Nn+4n^2\rangle$$
 We know that $\langle n\rangle = \calG'(1)=Np=N/2$ and from the expressions for $\calG''(1)$ and $\calG'(1)$ we get $\langle n^2 \rangle = \calG''(1) + \calG'(1)$ where $\calG''(1) = N^2p^2 = N^2/4-N/4$. We can now calculate $\langle d^2 \rangle$.
 
 \begin{eqnarray*}
 	\langle d^2 \rangle &=& N^2 -4N\frac{N}{2}+4\left(\frac{N^2}{4}-\frac{N}{4}+\frac{N}{2}\right)\\
 		&=& N^2-2N^2+N^2+N\\
-		&=& N.
+		&=& N
 \end{eqnarray*}
 So, $d_{rms}=\sqrt{N}$ and the variance in the net expected outcome scales like $\sqrt{N}$ as $N$ increases. I.e. after $N$ steps we expect to be a rms distance of $\pm \sqrt{N}$ away from the mean of zero.
 
-[Draw/add a figure of this with N as the independent variable.]
+\begin{center}
+	\begin{tikzpicture}
+	\begin{axis}[
+	axis lines = center,
+	xlabel = $N$,
+	]
+	
+	\addplot [
+	domain=0:10, 
+	samples=100, 
+	color=red,
+	]
+	{x^(1/2)};
+	\addlegendentry{$\sqrt{N}$}
+	
+	\addplot [
+	domain=0:10, 
+	samples=100, 
+	color=blue,
+	]
+	{-x^(1/2)};
+	\addlegendentry{$-\sqrt{N}$}
+	
+	\end{axis}
+	\end{tikzpicture}
+\end{center}
 
 We can now look at how this would change if the binary process had some small bias $\alpha = |p-q| >0$. In this case, at each step, the expected outcome is $\alpha$ and the bounds for the rms distance from the mean are $\alpha N\pm\sqrt{N}$. 
 
