@@ -185,7 +185,7 @@ $$\calG(x) = P(X=r_0)x^0+P(X=r_1)x^1+\cdots = \sum_{n=0}^\infty P(X=r_n)x^n.$$
 The two properties above are easy to see and are not unexpected. More interesting is the fact that derivatives of PGFs can be used to obtain expressions for the mean, and higher order moments, of the distribution associated with the PGF.
 
 \begin{eqnarray*}
-	\frac{d}{dx}\calG(x)=\calG'(x)&=&\sum_r rPrx^{r-1},\qquad\text{and}\\
+	\frac{d}{dx}\calG(x)=\calG'(x)&=&\sum_r rP_r x^{r-1},\qquad\text{and}\\
 	\calG''(x)&=&\sum_r r(r-1)P_rx^{r-2}
 \end{eqnarray*}
 
@@ -218,7 +218,7 @@ The PGF for the binomial distribution is therefore given by $\calG(x) = \sum_{r=
 The coefficients in the binomial distribution are (not surprisingly) the coefficients from the  binomial expansion theorem. This means that instead of writing the PGF as a sum, we can easily express it (and its derivatives) as a polynomial:
 \begin{eqnarray*}
 	\calG(x)  &=& (xp +q)^N \\
-	\calG'(x) &=& N(xp+p)^{N-1}p\\
+	\calG'(x) &=& N(xp+q)^{N-1}p\\
 	\calG''(x) &=& N(N-1)(xp+q)^{N-2}p^2
 \end{eqnarray*}
 
