@@ -1,13 +1,18 @@
 \documentclass{article}
 \usepackage[utf8]{inputenc}
 \usepackage{amsmath}
+\usepackage{pgfplots}
+
+\newcommand{\calG}{\mathcal{G}}
+
+
 \title{Physics 708: Statistical Mechanics}
 \author{Dion O'Neale 
 	and Nicola Gujer
 	and another person}
 \begin{document}
 \maketitle
-\section{Lecture 1: Thermodynamics}
+\section*{Thermodynamics - a refresher}
 We'll start with a quick overview of some of the important concepts from classical thermodynamics. These ideas motivated much of statistical mechanics. This section will also recap some content from 315.
 
 \subsection*{Macroscopic laws of thermodynamics}
@@ -99,7 +104,7 @@ The intensive variable is the derivative of the internal energy with respect to 
 
 Given two systems 1 and 2, an extensive variable for the composite system $1\cup2$ can be found by simply adding the individual extensive variables. E.g. $N_{1\cup2} = N_1 + N_2$, $V_{1\cup2} = V_1 + V_2$, $E_{1\cup2} = E_1 + E_2$ ($E$ = internal energy).
 
-Actually, the case of internal energy is not entirely correct since there is often an interaction term between the two systems at the interface. I.e. $E_{1\cup2} = E_1+E_2+E_{int}$. Since $E_{int}$ depends on the interface between the two systems it scales like an area as a function of system size, while $E_1$ and $E_2$ will scale like a volume, so typically $\frac{E_{int}}{E_1+E_2}\rightarrow0$ as the system size gets big. E.g. an oil water interface (insert an image?).
+Actually, the case of internal energy is not entirely correct since there is often an interaction term between the two systems at the interface. I.e. $E_{1\cup2} = E_1+E_2+E_{int}$. Since $E_{int}$ depends on the interface between the two systems it scales like an area as a function of system size, while $E_1$ and $E_2$ will scale like a volume, so typically $\frac{E_{int}}{E_1+E_2}\rightarrow0$ as the system size gets big. E.g. an oil water interface.
 
 But this assumption clearly depends on the structural details of the interface. Imagine the oil-water interface in an emulsion like mayonnaise --- in this case the ratio  $\frac{E_{int}}{E_1+E_2}$ is more like $\mathcal{O}(1)$.
 Similarly, if there are significant long range interactions. (E.g.gravity --- it might not work using stat mech to model celestial mechanics.)
@@ -118,17 +123,17 @@ Entropy has the following properties:
 \begin{enumerate}
 \item Extensivity: ($S$ is an extensive variable) If 1 and 2 are thermodynamic systems then $S_{1\cup2}=S_1+S_2$.
 \item Convexity: If $X^1=(X_0^1,X_1^1,\ldots,X_r^1)$ and  $X^2=(X_0^2,X_1^2,\ldots,X_r^2)$ are two thermodynamic states of the same system then for $0\leq\alpha\leq1$
-$$ S((1-\alpha)X^1+\alpha X^2)\geq (1-\alpha)S(X^1)+\alpha S(X^2) $$.
+$$ S((1-\alpha)X^1+\alpha X^2)\geq (1-\alpha)S(X^1)+\alpha S(X^2) $$
 I.e. the entropy of a linear combination of states is greater than or equal to the same linear combination of entropies of the individual states.
 A consequence of this is that if we take derivatives with respect to $\alpha$ at $\alpha=0$ we get
 $$\frac{\partial}{\partial \alpha} S((1-\alpha)X^1+\alpha X^2) = \sum_{i=0}^r\frac{\partial S}{\partial X_i}(X_i^2-X_i^1)$$
 and
 
-$$\frac{\partial}{\partial \alpha} \left[ (1-\alpha)S(X^1)+\alpha S(X^2) \right] = S(X^2)-S(X^1).$$
+$$\frac{\partial}{\partial \alpha} \left[ (1-\alpha)S(X^1)+\alpha S(X^2) \right] = S(X^2)-S(X^1)$$
 
 So,
-$$ \sum_{i=0}^r\frac{\partial S}{\partial X_i}(X_i^2-X_i^1)\geq  S(X^2)-S(X^1)$$.
-So the entropy surface (as a fn of the other extensive variables) is always below the tangent plane of a point on the surface. We'll use this soon.
+$$ \sum_{i=0}^r\frac{\partial S}{\partial X_i}(X_i^2-X_i^1)\geq  S(X^2)-S(X^1)$$
+So the entropy surface (as a function of the other extensive variables) is always below the tangent plane of a point on the surface. We'll use this soon.
 \item Monotonicity: $S(E,X_1,\ldots,X_r)$ is a monotonically increasing function of the internal energy $E$. I.e. $\frac{\partial S}{\partial E}\vert_{X_1,\ldots,X_r} = \frac{1}{T}>0$.
 \end{enumerate}
 
@@ -137,10 +142,10 @@ Using these three properties, it is possible to find the final equilibrium therm
 Worked example. Consider two systems, 1 and 2, in thermal contact such that they can exchange energy, but nothing else (I.e. no other extensive quantities change). The space of possible states is defined by 
 $$E^1+E^2 = X_0^1+X_0^2 = E = \text{const.}$$
 $$X_i^1 = \text{const.}\quad i=1,2,\ldots,r$$
-$$X_i^2 = \text{const.}\quad i=1,2,\ldots,r.$$
+$$X_i^2 = \text{const.}\quad i=1,2,\ldots,r$$
 We want to find the maximum of $S$ as a function of $E^1$ (we could just as well use $E^2$). Start by taking the derivative of $S$.
 
-$$\frac{\partial S}{\partial E^1} = \frac{\partial}{\partial E^1}\left(S^1(E^1,X_1^1,X_2^1,\ldots,X_r^1) + S^2(\underbrace{E-E^1}_{E=E^1+E^2},X_1^2,X_2^2,\ldots,X_r^2) \right) = \frac{\partial S^1}{\partial E^1}\bigg\vert_{E^1} -  \frac{\partial S^2}{\partial E^2}\bigg\vert_{E^2=E-E^1}.$$
+$$\frac{\partial S}{\partial E^1} = \frac{\partial}{\partial E^1}\left(S^1(E^1,X_1^1,X_2^1,\ldots,X_r^1) + S^2(\underbrace{E-E^1}_{E=E^1+E^2},X_1^2,X_2^2,\ldots,X_r^2) \right) = \frac{\partial S^1}{\partial E^1}\bigg\vert_{E^1} -  \frac{\partial S^2}{\partial E^2}\bigg\vert_{E^2=E-E^1}$$
 For $E^1$ at equilibrium we will write $E^1_{eq}$ (sim. for $E^2$). Then to maximise $S$ we must have
 $$\frac{\partial S}{\partial E^1}\bigg\vert_{E^1_{eq}} = \frac{\partial S^1}{\partial E^1}\bigg\vert_{E^1_{eq}} - \frac{\partial S^2}{\partial E^2}\bigg\vert_{E-E^1_{eq}}=0$$
 so $\frac{\partial S^1}{\partial E^1}\vert_{E^1_{eq}} = \frac{\partial S^2}{\partial E^2}\vert_{E_{eq}^2}$. We already have our first result --- the equilibrium state is the one where the change in entropy of the two systems, wrt, $E$ is equal. (The  monotonicity postulate equated this with inverse temperature.)
@@ -154,5 +159,211 @@ But $E$ is conserved so $E=E^1_{in}+E^2_{in}$ so we have $E-E^1_{eq}-E^2_{in} = 
 $$\left[\frac{\partial S^1}{\partial E^1}\bigg\vert_{E^1_{in}} - \frac{\partial S^2}{\partial E^2}\bigg\vert_{E^2_{in}}\right]\left(E^1_{eq}-E^1_{in}\right)\geq 0.$$
 
 This implies that energy flows to the  system with higher $\frac{\partial S}{\partial E}$. From the monotonicity postulate we identified  $\frac{\partial S}{\partial E}= \frac{1}{T}$ so energy flows into the system with lowest temperature, until the temperatures are equal.
+
+\subsection*{Suggested reading}
+Chapter 3 of \emph{Statistical Mechanics made Simple} (It's on the recommended reading list) covers the elements of thermodynamics nicely. Sections 3.1 to 3.5 in particular go over most of the concepts we have looked at here and introduce a few additional ideas.
+
+\section*{Probability}
+Physical variables can be either continuous or discrete. Continuous variables, like the spatial position of a particle ${\bf r} = (x,y,z);$ $x\rightarrow x+dx$ allow us to apply tools from differential calculus. Discrete variables (like the spin of an electron, the face of a playing card, or the energy level of a quantum particle) require a different approach. As the number of discrete states gets gets large, it is possible to approximate a discrete system by a continuous one. However, there are often statistical reasons why this is not always the best approach. (For an example of the issue of approximating a discrete distribution with a continuous one, see the article  Clauset, Shalizi, and Newman. ``Power-Law Distributions in Empirical Data.'' SIAM Review (2009) doi:10.1137/070710111)
+
+Here we are going to look at some simple discrete distributions, including one of the simplest --- the binomial distribution which describes the probability of events that can take one of only two possible outcomes. The tool we will employ to study these distributions is \emph{probability generating functions} (or generating functions for short). Although PGFs can be somewhat cumbersome, they provide a very powerful general tool that can applied to a wide range of situations involving discrete probabilities. In this sense they are like the Taylor series of discrete probability.
+
+\subsection*{Probability generating functions}
+A probability generating function (PGF) is a polynomial whose coefficients are the probabilities associated with each outcome of some random process.
+For example, the PGF for an equal probability die is 
+$$\calG(x) = 0x^0+\frac16x^1+\frac16x^2+\frac16x^3+\frac16x^4+\frac16x^5+\frac16x^6.$$
+As an example of how PGFs are a handy general tool, say we now wanted to find the PGF for the sum when we roll two such dice. We can just multiply the PGFs to get $\calG'(x) = \calG(x)\calG(x) = 0x^0 + 0x^1+\frac{1}{36}x^1x^1+\frac{2}{36}x^1x^2+\cdots+\frac{1}{36}x^6x^6.$
+
+More generally, the set of probabilities associated with any discrete distribution can be used as coefficients of $\calG(x)$:
+$$\calG(x) = P(X=r_0)x^0+P(X=r_1)x^1+\cdots = \sum_{n=0}^\infty P(X=r_n)x^n.$$
+
+\subsection*{Properties of generating functions}
+\begin{eqnarray*}
+	\calG(0)&=&P(X=0)\\
+	\calG(1)&=&\text{sum over all probabilities}=1
+\end{eqnarray*}
+The two properties above are easy to see and are not unexpected. More interesting is the fact that derivatives of PGFs can be used to obtain expressions for the mean, and higher order moments, of the distribution associated with the PGF.
+
+\begin{eqnarray*}
+	\frac{d}{dx}\calG(x)=\calG'(x)&=&\sum_r rPrx^{r-1},\qquad\text{and}\\
+	\calG''(x)&=&\sum_r r(r-1)P_rx^{r-2}
+\end{eqnarray*}
+
+If we evaluate the first derivative of the PGF at 1 we get
+$$\calG'(1) = \sum_r rP_r$$
+The expected value of an arbitrary function $f(r)$ is given by $\langle f(r)\rangle = \sum_r f(r) P(X=r)$, therefore $\calG'(1) = \langle r\rangle$ --- the expected value, or mean, of the distribution.
+
+Similarly,  Evaluating $\calG(x)$ at 1 give 
+$$\calG''(1) = \sum_r r(r-1)P(X=r) = \langle X(X-1)\rangle$$
+
+Why would we care about being able to find $\langle X(X-1)\rangle = \langle X^2 -X\rangle$? Because the variance of X, is given by 
+$$ V(X) = \langle X^2\rangle -\langle X\rangle^2$$ We are therefore able to construct $V(X)$ from combinations of $\calG$, $\calG'$, and $\calG''$.
+We can use the fact that $\langle X^2 -X\rangle =\langle X^2\rangle-\langle X\rangle$ I.e. $\sum(r^2-r)P(X=r)=\sum r^2P(X=r)-\sum rP(X=r)$ to get
+
+\begin{eqnarray}
+V(X)&=&\langle X^2\rangle - \langle X\rangle^2\\
+&=&\underbrace{\langle X^2\rangle -  \langle X \rangle}_{\calG''(1)} + \underbrace{\langle X\rangle}_{\calG'(1)} - \underbrace{\langle X \rangle^2}_{\calG'(1)^2}\\
+&=& \calG''(1) +\calG'(1)-\calG'(1)^2 \label{eq:binvar}
+\end{eqnarray}
+
+%Generating functions may not always be the shortest way to find the properties of some distribution, but they are a powerful way.
+
+\subsection*{The binomial distribution}
+The binomial distribution describes the probability of getting $r$ identical outcomes from a sequence of $N$ events where each event has only two possible states, e.g. number of heads from a sequence of coin tosses, number of Au atoms from deposition of Au and Ag atoms in some sputtering process, or number of spin up electrons in an uncorrelated system.
+
+The probabilities for the binomial distribution are given by
+$$P(X=r) = \binom{N}{r}p^rq^{N-r}, ~\text{ where } \binom{N}{r} = \frac{N!}{r!(N-r)!}, ~~r=0,1,\ldots,N$$
+and where (mostly) $p+q=1$.
+The PGF for the binomial distribution is therefore given by $\calG(x) = \sum_{r=0}^N\binom{N}{r}p^rq^{N-r}x^r$. 
+The coefficients in the binomial distribution are (not surprisingly) the coefficients from the  binomial expansion theorem. This means that instead of writing the PGF as a sum, we can easily express it (and its derivatives) as a polynomial:
+\begin{eqnarray*}
+	\calG(x)  &=& (xp +q)^N \\
+	\calG'(x) &=& N(xp+p)^{N-1}p\\
+	\calG''(x) &=& N(N-1)(xp+q)^{N-2}p^2
+\end{eqnarray*}
+
+Evaluating the above at $x=1$ gives:
+	\begin{eqnarray*}
+	\calG(1) &=& (p+x)^N = 1 ~\text{ if } p+q=1\\
+	\calG'(1) &=& N(p+q)^{N-1}P = Np  ~\text{ if } p+q=1\\
+	\calG''(1) &=& N(N-1)(p+q)^{N-2}p^2 \\
+		&=&N(N-1)p^2  ~\text{ if } p+q=1
+\end{eqnarray*}
+As expected, we have $\langle X\rangle =Np$ for the event associated with the probability $p$.
+Similarly, we can calculate the variance of the binomial distribution using equation \ref{eq:binvar}
+\begin{eqnarray*}
+	V(X) &=&\calG''(1) - \calG'(1) -\calG'(1)^2\\
+		&=& N^2p^2-Np^2+Np-N^2p^2\\
+		&=& N(p-p^2)\\
+		&=& Np(1-p)= Npq
+\end{eqnarray*}
+
+If you are feeling enthusiastic, compare the calculation above with the usual method for finding the variation of the binomial distribution without using a PGF.
+
+\subsection*{The Poisson distribution}
+Since the Poisson distribution shows up quite often in stat mech, we will have a look at how its properties can be derived via PGFs.
+The Poisson distribution describes the probability of $r$ distinct events occur in a time interval, given that the long-run average rate is $\lambda$ per time interval. It has probabilities given by $P(X=r) = \frac{\lambda^r}{r!}\exp(-\lambda)$. The PGF for the Poisson distribution is given by
+$$G(x) = \sum_r=0^\infty \frac{\lambda^r}{r!}\exp(-\lambda)x^r = \exp(-\lambda)\sum\frac{(\lambda x)^r}{r!}$$
+Note that the sum in the last term of the expression above is the power series expansion for the exponential function. Handy --- we can now write:
+\begin{eqnarray*}
+\calG(x) &=& \exp(-\lambda)\exp(\lambda x)\\
+\calG'(x) &=& \lambda\exp(-\lambda)\exp(\lambda x)\\
+\calG''(x)&=&\lambda^2\exp(-\lambda)\exp(\lambda x)
+\end{eqnarray*}
+
+So we have $\langle X \rangle = \calG'(1) = \lambda$, as per the definition, and
+$$V(X) = G''(1) + G'(1) - G'(1)^2 = \lambda^2+\lambda-\lambda^2 = \lambda$$
+
+\subsection*{The expected long-run outcome of a binary process}
+What is the net outcome we can expect from a sequence of $N$ binary events? What is the variance in this net outcome? How long can we expect the net outcome to remain positive? 
+
+Think of a sequence of coin tosses where heads implies $+1$ and tails implies $-1$. We will denote the number of heads from $N$ events as $n_h$ and the number of tails as $n_t = N-n_h$, then the net outcome is $d = n_t-n_h = N-2n_h$. 
+
+If $p=q=\frac12$ then the expected value of $d$ is $\langle d\rangle= 0$. (It's easy to check this: $\langle d\rangle = \langle N-2n\rangle = N-2\langle n\rangle = N-\frac{2}{2}N=0.$)
+
+We want to find the variation in $d$, or rather, the root-mean-squared deviation 
+$$d_{rms} = \left(\langle d^2\rangle - \langle d\rangle^2\right)^{\frac12} =  \langle d^2\rangle^{\frac12}$$
+
+At this point we'll drop the subscript in $n$ since we only have $n_h$ and since the probabilities are equal. From $d=N-2n$ we have $$ \langle d^2\rangle = \langle (N-2n)^2\rangle = \langle N^2 -4Nn+4n^2\rangle$$
+We know that $\langle n\rangle = \calG'(1)=Np=N/2$ and from the expressions for $\calG''(1)$ and $\calG'(1)$ we get $\langle n^2 \rangle = \calG''(1) + \calG'(1)$ where $\calG''(1) = N^2p^2 = N^2/4-N/4$. We can now calculate $\langle d^2 \rangle$.
+
+\begin{eqnarray*}
+	\langle d^2 \rangle &=& N^2 -4N\frac{N}{2}+4\left(\frac{N^2}{4}-\frac{N}{4}+\frac{N}{2}\right)\\
+		&=& N^2-2N^2+N^2+N\\
+		&=& N
+\end{eqnarray*}
+So, $d_{rms}=\sqrt{N}$ and the variance in the net expected outcome scales like $\sqrt{N}$ as $N$ increases. I.e. after $N$ steps we expect to be a rms distance of $\pm \sqrt{N}$ away from the mean of zero.
+
+\begin{center}
+	\begin{tikzpicture}
+	\begin{axis}[
+	axis lines = center,
+	xlabel = $N$,
+	]
+	
+	\addplot [
+	domain=0:10, 
+	samples=100, 
+	color=red,
+	]
+	{x^(1/2)};
+	\addlegendentry{$\sqrt{N}$}
+	
+	\addplot [
+	domain=0:10, 
+	samples=100, 
+	color=blue,
+	]
+	{-x^(1/2)};
+	\addlegendentry{$-\sqrt{N}$}
+	
+	\end{axis}
+	\end{tikzpicture}
+\end{center}
+
+We can now look at how this would change if the binary process had some small bias $\alpha = |p-q| >0$. In this case, at each step, the expected outcome is $\alpha$ and the bounds for the rms distance from the mean are $\alpha N\pm\sqrt{N}$. 
+
+[Draw/add this too.]
+
+\subsection*{Brownian motion}
+Brownian motion is a model that describes the behaviour of particles in suspension (e.g. of dust in air, fine silt in dirty water) that have some velocity but which are constantly changing direction as they are buffeted by other particles. Their motion can be understood through a calculation similar to that for the net outcome of the binary process above, but in 3D.
+
+The conceptual model that is often used when discussing Brownian motion is that of a \emph{random walk}. Consider a random walker who after $n$ steps is at the position ${\bf r} = (x,y,z)$. Each step is given by ${\bf s}_{n+1} = {\bf r}_{n+1}- {\bf r}_n$ and has step length $s_n$ in a random and uncorrelated direction ${\bf\hat{s}}_n$. Again (by symmetry) $\langle {\bf s}\rangle =0$. We want to find how far a particle might have gone after $N$ steps. We will define $\lambda^2= \langle {\bf s}^2\rangle$ --- the average square step-length. We write ${\bf r}_N$ for the position of the walker (or the particle) after $N$ steps, then
+\begin{eqnarray*}
+	\langle {\bf r}_N^2 \rangle &=& \bigg\langle \left(\sum_{n=1}^N{\bf s}_n\right)^2 \bigg\rangle\\
+		&=& \bigg\langle \sum_{n=1}^N{\bf s}_n^2 +2\sum_{n=1}^{N-1}\sum_{m=n+1}^N{\bf s}_n\cdot{\bf s}_m \bigg\rangle\\
+		&=& \sum\underbrace{\langle {\bf s}_n\rangle}_{=\lambda^2} + 2\sum\sum \underbrace{\langle {\bf s}_n \cdot {\bf s}_m \rangle}_{=\langle {\bf s}_n\rangle \cdot \langle{\bf s}_m \rangle=0}
+\end{eqnarray*}
+
+The first term in the expression is the mean squared step-length while the second term is zero since there is no correlation between the directions of each of the steps. Hence $\langle {\bf r}_N\rangle = N\lambda^2$ and the rms displacement is $\sqrt{N}\lambda$. If the number of steps is proportionate to the length of time that the particles move for, then we have that the mean-square displacement scales like $\sqrt{t}$. This is one of the key features of diffusive processes. 
+
+\section*{Statistical postulates}
+So far we have looked at the macroscopic properties of a thermodynamics system and at some ways of calculating properties of random processes that obey some given probability distribution. Now it is time to combine these ideas and have a first attempt at linking the microscopic behaviour of a thermodynamic system (an idealised gas) with some of its macroscopic properties.
+
+The behaviour of a given (mechanical) system depends on both the structure of the system --- described by its equations of motion --- and on the \emph{initial conditions} of the system. Therefore, in order to describe the behaviour of the system, we need both the laws of mechanics for the system along with some statistical postulates about the initial conditions of the system. (We could also require that we know the exact initial conditions for all the particles in the system, but this is not realistic for $\mathcal{O}(10^{23})$ particles.) Different choices of the statistical postulates can lead to different behaviour (not just different states) of the system. We will look at Maxwell's postulates for the initial positions and velocities of a dilute collection of gas particles. We will see that they allow us to derive the ideal gas law from a microscopic basis.
+
+\subsection*{An ideal gas}
+We want to keep the equations of motion for our system of particles as simple as possible. We are going to assume   that our system has the following properties:
+\begin{itemize}
+\item We have $N$ identical  point particles, each with mass $m$, constrained in a volume $V$.
+\item There are no mutual interactions --- no van der Waals effects or inter-particle forces for us!
+\item The walls of the container constraining the particles are perfectly reflecting.
+\item The mechanical state of the system is known when the position $\bf r$ and velocity $\bf v$ is known for each particle and these variables evolve according to Newton's laws of motion.
+\end{itemize}
+
+\subsection*{Maxwell's postulates}
+We assume that the vectors describing the initial conditions of the system are randomly distributed. More specifically:
+\begin{enumerate}
+\item The vectors relating to each particle are independent from each other. (e.g. there is no interaction between particles when they are close.) This is generally not true for any but the most dilute systems. For such a non-interacting system, the system's state is determined when $dN=f({\bf r},{\bf v})$ is known, where $dN$ is the number of particles in a box with sides $d{\bf r}=(dx,dy,dz)$ centered on the point ${\bf r} = (x,y,z)$ and where the corresponding velocities of the particles lie within a box d${\bf v}=(dv_x,dv_y,dv_z)$ centered on ${\bf v}=(v_x,v_y,v_z)$. This relationship defines the \emph{single-particle distribution} $f({\bf r},{\bf v})$.
+\item The positions ${\bf r}$ are independent of the velocities ${\bf v}$. This means we can factorise $f({\bf r},{\bf v})$ as $f({\bf r},{\bf v})$ =$f_r({\bf r})$ $f_v({\bf v})$ .
+\item The density of the gas is uniform within the volume so we can write $f({\bf r}) = N/V=\rho=$ constant inside the volume (and zero outside it).
+\item The velocity components are independent of each other so we can factorise $f_v$ as $f_v({\bf v})=f_x(v_x)f_y(v_y)f_z(v_z)$.
+\item The distribution $f_v({\bf v})$ is isotropic in velocity space so that $f_v$ depends only on the magnitude of the velocity $|{\bf v}| = v$
+\end{enumerate}
+
+\subsection*{Equation of state}
+Maxwell's postulates allow us to derive the equation of state for an ideal gas (the ideal gas law). They provide a microscopic interpretation of absolute temperature in terms of kinetic energy.
+
+Consider a particle with velocity ${\bf v} = (v_x,v_y,v_z)$, moving from the left, that hits a wall parallel to the $yz$-plane. After impact its velocity is ${\bf v'}=(-v_x,v_y,v_z)$. Hence, the change in momentum is $\Delta {\bf p}= {\bf p'} - {\bf p} = m({\bf v'}-{\bf v}) = m(-2v_x,0,0)$.
+
+How many such impacts occur in a given time interval $\Delta t$ on a region of the wall with area $A$? 
+Take a box with a side of area $A$ on the wall and perpendicular sides of length $v_x\Delta t$. This contains the particles of velocity ${\bf v}$ that can hit the wall. The volume of the box is $Av_x\Delta t$ and the number of particles it contains is $\rho Av_x\Delta t f_v({\bf v})$, where $\rho=N/V$ is the density of all particles  and $f_v$ is the probability that a particle has velocity $\bf v$.
+The total momentum $\Delta P$ transmitted to the wall is therefore
+$$\Delta P =\int_0^\infty dv_x \int_{-\infty}^\infty dv_y \int_{-\infty}^\infty dv_z f_v({\bf v})\rho A\Delta t(-2m)v_x^2{\bf i}$$
+where ${\bf i} =(1,0,0)$ picks out the $x$-component. I.e. integrate over the number of particles times the momentum per particle. The first integral only runs from zero since we are only interested in particles traveling towards the right, i.e. ${\bf v}>0$.
+
+The integral above gives 
+$$\Delta P = -2m\rho A\Delta t \langle v_x^2\rangle\frac12$$ where the average square velocities come from integrating over the velocity distribution and the factor of half comes from the integral over $v_x$, i.e. particles moving towards the right.
+The force exerted by the gas on the wall is $F=\Delta P/\Delta t$ and pressure is force/area = $|F|/A$.
+We therefore have 
+\begin{equation}
+	p=m\rho  \langle v_x^2\rangle.
+	\label{eq1.2}
+\end{equation}
+ 
+Compare this with the classical equation of state for an ideal gas $pV=nRT$ where $n=N/N_A$, $T$ is temperature and $R=8.3 J/K$ is a constant. If we introduce the Boltzman constant $k_B = R/N_A$ and the particle density $\rho =n/V$. The ideal gas law becomes $p=\rho k_BT$. Comparing the ideal gas law with equation \ref{eq1.2} 
+we find that we can relate the absolute temperature $T$ to the mean square velocities of the particles.
+
+
 
 \end{document}
