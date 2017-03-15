@@ -284,10 +284,16 @@ So, $d_{rms}=\sqrt{N}$ and the variance in the net expected outcome scales like 
 	\addplot [
 	domain=0:10, 
 	samples=100, 
-	color=red,
+	color=blue,
 	]
 	{x^(1/2)};
+%	\addlegendentry{$\sqrt{N}$}
+
+	color=red,
+	
+	{x^(1/2)};
 	\addlegendentry{$\sqrt{N}$}
+
 	
 	\addplot [
 	domain=0:10, 
@@ -295,7 +301,18 @@ So, $d_{rms}=\sqrt{N}$ and the variance in the net expected outcome scales like 
 	color=blue,
 	]
 	{-x^(1/2)};
+
+%	\addlegendentry{$-\sqrt{N}$}
+
+	\addplot [
+	domain=0:10, 
+	samples=100, 
+	color=red,
+	]
+	{0};
+
 	\addlegendentry{$-\sqrt{N}$}
+
 	
 	\end{axis}
 	\end{tikzpicture}
@@ -303,7 +320,38 @@ So, $d_{rms}=\sqrt{N}$ and the variance in the net expected outcome scales like 
 
 We can now look at how this would change if the binary process had some small bias $\alpha = |p-q| >0$. In this case, at each step, the expected outcome is $\alpha$ and the bounds for the rms distance from the mean are $\alpha N\pm\sqrt{N}$. 
 
-[Draw/add this too.]
+\begin{center}
+	\begin{tikzpicture}
+	\begin{axis}[
+	axis lines = center,
+	xlabel = $N$,
+	]
+	
+	\addplot [
+	domain=0:10, 
+	samples=100, 
+	color=blue,
+	]
+	{-x+x^(1/2)};
+	
+	
+	\addplot [
+	domain=0:10, 
+	samples=100, 
+	color=blue,
+	]
+	{-x-x^(1/2)};
+	
+	\addplot [
+	domain=0:10, 
+	samples=100, 
+	color=red,
+	]
+	{-x};
+	
+	\end{axis}
+	\end{tikzpicture}
+\end{center}
 
 \subsection*{Brownian motion}
 Brownian motion is a model that describes the behaviour of particles in suspension (e.g. of dust in air, fine silt in dirty water) that have some velocity but which are constantly changing direction as they are buffeted by other particles. Their motion can be understood through a calculation similar to that for the net outcome of the binary process above, but in 3D.
