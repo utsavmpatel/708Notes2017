@@ -296,10 +296,10 @@ So, $d_{rms}=\sqrt{N}$ and the variance in the net expected outcome scales like 
 	\addplot [
 	domain=0:10, 
 	samples=100, 
-	color=red,
+	color=blue,
 	]
 	{x^(1/2)};
-	\addlegendentry{$\sqrt{N}$}
+%	\addlegendentry{$\sqrt{N}$}
 	
 	\addplot [
 	domain=0:10, 
@@ -307,7 +307,14 @@ So, $d_{rms}=\sqrt{N}$ and the variance in the net expected outcome scales like 
 	color=blue,
 	]
 	{-x^(1/2)};
-	\addlegendentry{$-\sqrt{N}$}
+%	\addlegendentry{$-\sqrt{N}$}
+
+	\addplot [
+	domain=0:10, 
+	samples=100, 
+	color=red,
+	]
+	{0};
 	
 	\end{axis}
 	\end{tikzpicture}
