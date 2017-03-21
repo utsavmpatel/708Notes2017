@@ -529,6 +529,114 @@ Since $A(t)=Df({\bf x}(t))$ we have $\text{trace} A(t)=\sum_i\frac{\partial f_i}
 \subsection*{Recommended reading}
 This section has mostly followed the first half of chapter 3 of \emph{Statistical Mechanics in a Nutshell}. However, some of the significance of Hamiltonian systems is lost in SMiaN, so I've supplemented it with more substantive (mathematically oriented) details from \emph{Geometric Numerical Integration} by E. Hairer, Ch. Lubich and G. Wanner (Springer, 2006) --- one of the best books on (the numerics of) Hamiltonian dynamical systems and a personal favourite.
 
+\section*{Molecular dynamics and simulating Hamiltonian Systems}
+
+Much of the point of statistical mechanics is to \emph{avoid} dealing with the dynamics of microscopic systems by studying their aggregate (or extensive) properties in a statistical fashion. Given this, and the computational challenges of dealing with the dynamics of very large numbers of (probably interacting) particles, you might think that direct simulations don't have much or a role to play in statistical mechanics. But:
+\begin{itemize}
+	\item It isn't always tractable (or it's just plain difficult) to find analytical expressions or sufficiently accurate approximations to all stat mech systems.
+	\item Computing power is increasingly cheap and the size/complexity of the systems that we can study via simulation are always improving.
+	\item Simulations let us directly test assumptions about what effects are important to a system by, for example, simulating a different interaction term or different geometries.
+	\item There are many simulation approaches where clever heuristics allow us to deal with much larger systems than might be expected, while still getting the physics correct. (E.g. Monte Carlo methods --- see Shaun's content.) In some cases physical laws, such as energy-conservation, or preservation of phase space volume can be ``baked in'' to the simulation, such that the simulation automatically preserves the appropriate behaviour.
+\end{itemize}
+
+We're going to look in more detail at this last point --- how we might ensure that we can run a simulation for  that preserves physical laws. The context that we are going to look at is molecular dynamics.
+
+As you might expect from the previous section, such systems can be described by specifying a Hamiltonian where the kinetic energy component takes the familiar form
+$$ T = \sum_i \frac{{\bf p}_i^2}{2m_i},$$
+where the $p_i$ are the momenta of the molecules and $m_i$ are their masses.
+
+Interactions between particles are described by $U$, the potential term of the Hamiltonian. About the simplest model would be to treat each particle as a hard sphere, with no interactions between them, except during collisions.
+An interaction term that is only slightly more complicated, but is much more realistic, is given by the Lennard-Jones potential:
+$$
+	U(r_{ij}) = 4\epsilon_{ij}\left(\left(\frac{\sigma_{ij}}{r_{ij}}\right)^{12} - 2\left(\frac{\sigma_{ij}}{r_{ij}}\right)^{6}\right),
+$$
+where $|r_{ij}| = |r_i-r_j|$ are the inter-atomic separations. It's not hard to see that the potential has an absolute minimum at $r = \sigma$ --- this corresponds to the equilibrium separation between atoms. (Omitting the factor of 2 in the potential means the location of the minimum picks up a factor of $2^{-6}$.)The $\epsilon_{ij}$ terms gives the depth of the potential well --- the strength of the inter-atomic attraction. 
+
+As a brief historical aside, the $r^{-6}$ term in the potential can be derived mathematically as the attraction due to induced-dipole -- induced dipole interaction. This was known before Lennard-Jones, whose contribution was to include a term for the repulsion when the inter-atomic distance gets very small (Pauli repulsion due to overlapping wave-functions for electrons that are closer than the preferred bonding distance --- but that is getting into condensed matter physics). The repulsion term is actually exponential, rather than $r^{-12}$, but Lennard-Jones decided that $r^{-12}$ is pretty close to an exponential, and is much easier to calculate. Once you already know $r^{-6}$ you can just square it and save yourself a (relatively) expensive calculation of an exponential.
+
+It is worth noting that the pairwise interactions in the Lennard-Jones potential mean that for $N$ particles we must calculate $N^2$ interaction terms. Clearly, this can make trouble once N gets large. One common approach is to use a \emph{long-range cut-off} and only calculate the interaction terms for atoms that are less than some distance $L$ away, or perhaps, only for those inside a unit cell, with sides of length $L$.
+
+Regardless of the exact nature of the interaction term, we typically end up dealing with a Hamiltonian of the form 
+$$
+	H({\bf r},{\bf p}) = T({\bf p}) + U({\bf r}).
+$$
+
+Since $M\dot{\bf r} = {\bf p}$ and $M\ddot{\bf r} = \dot{\bf p}$ the equations of motion for the system can be written as
+\begin{equation}
+	M\ddot{\bf r} = f({\bf r}) = -\nabla U({\bf r}).
+	\label{eq:2vf}
+\end{equation}
+That is, we can turn the set of $2d$ first-order differential equations in ${\bf r}$ and ${\bf p}$ into $d$ second order differential equation in ${\bf r}$.
+
+\subsection*{Numerical integration}
+Given the equations of motion (or the Hamiltonian) that describes a system, and some compatible initial conditions ${\bf r}(0)$, we want to find the state of the system at some time $T$ in the future (or the solution along some interval $[0,T]$). We do this by breaking the interval into small enough time steps of size $h$ and discretizing the solution ${\bf r}(t)$ as ${\bf r}n = {\bf r}(t_n) $ where $t_n = nh$.
+
+The simplest approach to approximating the discrete solution is the explicit \emph{Euler method}. It approximates the solution at $r(t_{n+1})=r_{n+1}$ with
+$$
+	r_{n+1} = r_n + h \dot{r}_n.
+$$
+That is, it evaluates the differential equation at the current time step and approximates the solution with a straight line of slope $\dot{r}_n$. 
+
+[You can add a diagram to illustrate this - even a hand drawn example.]
+
+The error in the approximation of the solution by the explicit Euler method grows in proportion to the step size $h$, that is $\|r_N-r(Nh)\|=\mathcal{O}(h)$. We therefore say that the method is fist order accurate.
+
+While the explicit Euler method is very easy to implement, it has a number of issues (you'll see one of them in the assignment). These include the fact that it becomes unstable (the error in its approximation starts to grow exponentially) when the step size is too large. The implicit Euler (like the explicit Euler method, but the derivative is evaluated at the end of the time step i.e.$f(r_{n+1})$) method avoids this issue, but at the cost of needing to iteratively solve an implicit equation $r_{n+1}=r_n+hf(r_{n+1})$. It is still only first order.
+
+A better approach to numerical integration is to use the Verlet (AKA St\"{o}rmer, AKA leap-frog) method. This is most easily understood in its two-step formulation (i.e. the method requires information from two previously known time steps ($t_{n-1}$ and $t_n$) in order to compute the approximation at the future time step $t_{n+1}$). The approximation is then given by 
+\begin{equation}
+	r_{n+1} - 2r_n + r_{n-1} = h^2f(r_n),
+	\label{eq:2lf}
+\end{equation}
+where $f(r)$ is the second order differential equation in equation \ref{eq:2vf}. It's not hard to see (you should verify it yourself) that the LHS of \ref{eq:2lf} is an approximation of the second derivative at the point $r_n$.
+The two-step formulation of the leapfrog method can therefore be seen as determining a parabola that interpolates the points $r_{n-1},~r_{n},$ and $r_{n+1}$ and matches the second derivative at the midpoint.
+
+It turns out that, for a number of reasons, it is better to work with the Verlet method in its one-step formulation. This can be derived by introducing the velocity $v=\dot{r}$ and turning equation \ref{eq:2vf} back into a first-order system of twice the dimension
+$$
+	\dot{r} = v,\qquad \dot{v} = f(r).
+$$
+
+We then introduce discrete approximations of $r$ and $v$ as follows:
+$$
+v_n =\frac{r_{n+1}-r_{n-1}}{2n},\qquad v_{n-\frac12} = \frac{r_n-r_{n-1}}{h}, \qquad r_{n-\frac12} = \frac{r_n + r_{n-1}}{2},
+$$
+where some of the derivatives have been evaluated on a staggered grid. We can then use these to formulate a one-step version of the Verlet method. 
+\begin{eqnarray*}
+	v_{n+\frac12} &=& v_n+\frac{h}{2}f(r_n),\\
+	q_{n+1} &=& q_n +hv_{n+\frac12},\\
+	v_{n+1} &=& v_{n+\frac12}+\frac{h}{2}v_{n+\frac12}.
+\end{eqnarray*}
+There is also a dual formulation of the method that gives the values of $r$ and $v$ on the staggered grid points $t_{n-\frac12},t_{n+\frac12},$ etc.
+(It makes sense to think of the one-step method as a discrete map $\Phi_h$, similar to the flow map $\phi_{f,t}$ that maps from the known solution, to it's approximation one time step forward.)
+
+If the velocity values are not needed at the end of each step, then the last line of one step can be combined with the first line of the next step to avoid one evaluation of $f$ per step by only calculating $v$ on the staggered grid:
+\begin{eqnarray*}
+	v_{n+\frac12} &=& v_{n-\frac12}+hf(r_n),\\
+	q_{n+1} &=& q_n +hv_{n+\frac12}.
+\end{eqnarray*}
+This is the most computationally efficient of the Verlet method. It is also numerically more stable than the two-step formulation.
+
+It is not too hard to show (you should prove it for yourself) that the Verlet method is symplectic. That is the discrete map that it defines preserves the symplectic form that we saw earlier. This is almost, but not quite the same as preserving the value of the associated Hamiltonian along solutions of the vector field. In fact, it is possible to show (but trickier than proving symplecticity) that the difference between the value of the Hamiltonian evaluated along the discrete approximation from the Verlet method differs only exponentially slowly from the exact value of the Hamiltonian for the true solution. This makes the Verlet method a popular choice for molecular dynamics. In addition to having good stability and being easy to implement, it is automatically almost energy-preserving. The Verlet method is second order accurate, that is the error in the solution $\|x_{nh}-x(nh)\|=\mathcal{O}(h^2)$.
+
+Now that we have a suitable method for calculating the micro-state of a system at some point in the future, we can look for ways to measure macroscopic quantities from the solution. It is worth bearing in mind that for any simulations, the initial conditions use are unlikely to correspond to representative configuration for the system, it is good practise let the simulation run for a period of time (perhaps a few thousand time steps) before attempting to measure any properties. This process is known as equilibration or thermalization.
+
+Using simulated particle trajectories usually means we simplicity invoke an assumption of \emph{ergodicity}. This essentially says that averaging of a solution, for a long enough time period for a system, is equivalent to averaging over a large number of initial conditions for the same system, where the initial conditions correspond to the same macro-sate of the system.
+
+We have seen earlier that we identify the temperature of a thermodynamic system with the average square velocities of the particles in the system with some suitable normalisation. The temperature of our simulated system, with $N$ particles is therefore given by
+$$
+	T(p) = \frac{1}{Nk_B}\sum_{i=1}^N\frac{1}{2m_i}\|p_i\|^2.
+$$
+
+Other easily computable quantities include the virial function (we haven't mentioned this yet, but it is used to relate the total potential energy of a system to the total kinetic energy and can be used to calculate the pressure of a system --- see pp 255--256 of \emph{Statistical Mechanics in a Nutshell}):
+$$
+	C(r) = \sum_{i=2}^N\sum_{j=1}^{i-1}\nabla U(r_{ij})r_{ij},
+$$
+
+and the constant volume specific heat:
+$$
+	C_v = k_B\left[\frac{2}{3N}-\frac{4}{9}\frac{\langle(T-\langle T\rangle)^2\rangle}{\langle T\rangle^2}\right]^{-1}.
+$$
+
 
 
 \end{document}
