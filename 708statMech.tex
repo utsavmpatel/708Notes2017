@@ -569,7 +569,7 @@ Since $M\dot{\bf r} = {\bf p}$ and $M\ddot{\bf r} = \dot{\bf p}$ the equations o
 That is, we can turn the set of $2d$ first-order differential equations in ${\bf r}$ and ${\bf p}$ into $d$ second order differential equation in ${\bf r}$.
 
 \subsection*{Numerical integration}
-Given the equations of motion (or the Hamiltonian) that describes a system, and some compatible initial conditions ${\bf r}(0)$, we want to find the state of the system at some time $T$ in the future (or the solution along some interval $[0,T]$). We do this by breaking the interval into small enough time steps of size $h$ and discretizing the solution ${\bf r}(t)$ as ${\bf r}n = {\bf r}(t_n) $ where $t_n = nh$.
+Given the equations of motion (or the Hamiltonian) that describes a system, and some compatible initial conditions ${\bf r}(0)$, we want to find the state of the system at some time $T$ in the future (or the solution along some interval $[0,T]$). We do this by breaking the interval into small enough time steps of size $h$ and discretizing the solution ${\bf r}(t)$ as ${\bf r}_n = {\bf r}(t_n) $ where $t_n = nh$.
 
 The simplest approach to approximating the discrete solution is the explicit \emph{Euler method}. It approximates the solution at $r(t_{n+1})=r_{n+1}$ with
 $$
@@ -598,13 +598,13 @@ $$
 
 We then introduce discrete approximations of $r$ and $v$ as follows:
 $$
-v_n =\frac{r_{n+1}-r_{n-1}}{2n},\qquad v_{n-\frac12} = \frac{r_n-r_{n-1}}{h}, \qquad r_{n-\frac12} = \frac{r_n + r_{n-1}}{2},
+v_n =\frac{r_{n+1}-r_{n-1}}{2h},\qquad v_{n-\frac12} = \frac{r_n-r_{n-1}}{h}, \qquad r_{n-\frac12} = \frac{r_n + r_{n-1}}{2},
 $$
 where some of the derivatives have been evaluated on a staggered grid. We can then use these to formulate a one-step version of the Verlet method. 
 \begin{eqnarray*}
 	v_{n+\frac12} &=& v_n+\frac{h}{2}f(r_n),\\
-	q_{n+1} &=& q_n +hv_{n+\frac12},\\
-	v_{n+1} &=& v_{n+\frac12}+\frac{h}{2}v_{n+\frac12}.
+	r_{n+1} &=& r_n +hv_{n+\frac12},\\
+	v_{n+1} &=& v_{n+\frac12}+\frac{h}{2}f(r_{n+1}).
 \end{eqnarray*}
 There is also a dual formulation of the method that gives the values of $r$ and $v$ on the staggered grid points $t_{n-\frac12},t_{n+\frac12},$ etc.
 (It makes sense to think of the one-step method as a discrete map $\Phi_h$, similar to the flow map $\phi_{f,t}$ that maps from the known solution, to it's approximation one time step forward.)
@@ -612,7 +612,7 @@ There is also a dual formulation of the method that gives the values of $r$ and 
 If the velocity values are not needed at the end of each step, then the last line of one step can be combined with the first line of the next step to avoid one evaluation of $f$ per step by only calculating $v$ on the staggered grid:
 \begin{eqnarray*}
 	v_{n+\frac12} &=& v_{n-\frac12}+hf(r_n),\\
-	q_{n+1} &=& q_n +hv_{n+\frac12}.
+	r_{n+1} &=& r_n +hv_{n+\frac12}.
 \end{eqnarray*}
 This is the most computationally efficient of the Verlet method. It is also numerically more stable than the two-step formulation.
 
