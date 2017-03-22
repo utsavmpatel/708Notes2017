@@ -1,6 +1,6 @@
 \documentclass{article}
 \usepackage[utf8]{inputenc}
-\usepackage{amsmath}
+\usepackage{amsmath,amssymb}
 \usepackage{pgfplots}
 
 \newcommand{\calG}{\mathcal{G}}
@@ -185,7 +185,7 @@ $$\calG(x) = P(X=r_0)x^0+P(X=r_1)x^1+\cdots = \sum_{n=0}^\infty P(X=r_n)x^n.$$
 The two properties above are easy to see and are not unexpected. More interesting is the fact that derivatives of PGFs can be used to obtain expressions for the mean, and higher order moments, of the distribution associated with the PGF.
 
 \begin{eqnarray*}
-	\frac{d}{dx}\calG(x)=\calG'(x)&=&\sum_r rPrx^{r-1},\qquad\text{and}\\
+	\frac{d}{dx}\calG(x)=\calG'(x)&=&\sum_r rP_r x^{r-1},\qquad\text{and}\\
 	\calG''(x)&=&\sum_r r(r-1)P_rx^{r-2}
 \end{eqnarray*}
 
@@ -218,7 +218,7 @@ The PGF for the binomial distribution is therefore given by $\calG(x) = \sum_{r=
 The coefficients in the binomial distribution are (not surprisingly) the coefficients from the  binomial expansion theorem. This means that instead of writing the PGF as a sum, we can easily express it (and its derivatives) as a polynomial:
 \begin{eqnarray*}
 	\calG(x)  &=& (xp +q)^N \\
-	\calG'(x) &=& N(xp+p)^{N-1}p\\
+	\calG'(x) &=& N(xp+q)^{N-1}p\\
 	\calG''(x) &=& N(N-1)(xp+q)^{N-2}p^2
 \end{eqnarray*}
 
@@ -284,10 +284,14 @@ So, $d_{rms}=\sqrt{N}$ and the variance in the net expected outcome scales like 
 	\addplot [
 	domain=0:10, 
 	samples=100, 
-	color=red,
+	color=blue,
 	]
 	{x^(1/2)};
-	\addlegendentry{$\sqrt{N}$}
+%	\addlegendentry{$\sqrt{N}$}
+
+	color=red,
+
+
 	
 	\addplot [
 	domain=0:10, 
@@ -295,7 +299,16 @@ So, $d_{rms}=\sqrt{N}$ and the variance in the net expected outcome scales like 
 	color=blue,
 	]
 	{-x^(1/2)};
-	\addlegendentry{$-\sqrt{N}$}
+
+%	\addlegendentry{$-\sqrt{N}$}
+
+	\addplot [
+	domain=0:10, 
+	samples=100, 
+	color=red,
+	]
+	{0};
+
 	
 	\end{axis}
 	\end{tikzpicture}
@@ -303,7 +316,38 @@ So, $d_{rms}=\sqrt{N}$ and the variance in the net expected outcome scales like 
 
 We can now look at how this would change if the binary process had some small bias $\alpha = |p-q| >0$. In this case, at each step, the expected outcome is $\alpha$ and the bounds for the rms distance from the mean are $\alpha N\pm\sqrt{N}$. 
 
-[Draw/add this too.]
+\begin{center}
+	\begin{tikzpicture}
+	\begin{axis}[
+	axis lines = center,
+	xlabel = $N$,
+	]
+	
+	\addplot [
+	domain=0:10, 
+	samples=100, 
+	color=blue,
+	]
+	{-x+x^(1/2)};
+	
+	
+	\addplot [
+	domain=0:10, 
+	samples=100, 
+	color=blue,
+	]
+	{-x-x^(1/2)};
+	
+	\addplot [
+	domain=0:10, 
+	samples=100, 
+	color=red,
+	]
+	{-x};
+	
+	\end{axis}
+	\end{tikzpicture}
+\end{center}
 
 \subsection*{Brownian motion}
 Brownian motion is a model that describes the behaviour of particles in suspension (e.g. of dust in air, fine silt in dirty water) that have some velocity but which are constantly changing direction as they are buffeted by other particles. Their motion can be understood through a calculation similar to that for the net outcome of the binary process above, but in 3D.
@@ -363,6 +407,235 @@ We therefore have
  
 Compare this with the classical equation of state for an ideal gas $pV=nRT$ where $n=N/N_A$, $T$ is temperature and $R=8.3 J/K$ is a constant. If we introduce the Boltzman constant $k_B = R/N_A$ and the particle density $\rho =n/V$. The ideal gas law becomes $p=\rho k_BT$. Comparing the ideal gas law with equation \ref{eq1.2} 
 we find that we can relate the absolute temperature $T$ to the mean square velocities of the particles.
+
+\section*{Phase space, Hamiltonian dynamics, and the fundamental postulate of statistical mechanics}
+
+
+\subsection*{Phase space}
+
+At a microscopic level, a thermodynamic system is comprised of $N$ particles, each with some mass $m_i$, which can interact with each other and with the boundaries of the system. (Although we are going to motivate this discussion with a thermodynamic system, everything the follows is also true for other systems where the total energy of the system is conserved --- i.e. anywhere that a Hamiltonian could show up.) If we know the positions and momenta  for each of the particles then we can completely describe the state of the system. In three dimensions, this means we must know the values for each of the $6N$ degrees of freedom; more generally, we have $2d$ d.o.f. where $d$ is the number of d.o.f. for the positions. That is the state of the system is described by a point in a $6N$ (or $2d$) dimensional phase space.
+Once a point in the microscopic phase space is know, the evolution of the system is completely governed by the equations of motion for the system. These in turn are prescribed by the Hamiltonian of the system
+$$H = T+U,$$
+$T=$ kinetic energy, $U=$ potential energy. In general, $H$, $T$, and $U$ may all depend on both the positions and the momenta of the particles, however, for many systems we find that, conveniently, $T = \sum_i=1^N T_i$, where $T_i=\frac{{\bf p}_i^2}{2m_i}$, and the potential $U$ depends on on the positions: $U = U({\bf r}).$
+
+If the Hamiltonian is known for a system, then the equations of motion for that system are given by
+\begin{eqnarray*}
+	\frac{d{\bf r}_i}{dt} &=& ~~\frac{\partial H}{\partial {\bf p}}, \\
+	\frac{d{\bf p}_i}{dt} &=& -\frac{\partial H}{\partial {\bf r}}.
+\end{eqnarray*}
+
+If we write ${\bf x} = [{\bf r}^\top,{\bf p}^\top]^\top$, then we can compactly express the equations of motion as
+\begin{equation}
+	\frac{d{\bf x}}{dt} = f({\bf x}) = J^{-1}\nabla H({\bf x}),
+\end{equation}
+where
+$$
+	J = 
+	\begin{bmatrix}
+		0 & -Id\\
+		Id & 0
+	\end{bmatrix}.
+$$
+($Id$ is the identity matrix of dimension $d$.)
+
+Given a Hamiltonian, H, and a suitable set of initial conditions ${\bf x}_0$, the evolution of the solution ${\bf x}(t)$ can be quite complicated. (Hamiltonian systems are one of the archetypal systems for studying chaotic dynamics). However, the fact that the system is Hamiltonian provides us with some additional information that can help us characterise the state of the system. For example, it is not hard to prove that a solution ${\bf x}(t)$ that satisfies $\dot{\bf x} = f({\bf x}) = J^{-1}\nabla H({\bf x}),$ ${\bf x}_0 = {\bf x}(0)$ has $H({\bf x}(t)) = H({\bf x}_0)= const.$ That is, Hamiltonian systems conserve energy along their solutions. We identify the Hamiltonian $H$ with the internal energy of the system.
+
+Knowing that $\frac{dH}{dt}=0$, we can reduce the size of the phase space where ${\bf x}(t)$ can lie, from $2d$ d.o.f. down to $2d-1$. If we know other quantities that remain invariant over time (e.g. the total momentum of the system) then we can further reduce the size of the phase space. Strictly speaking, there are $2d-1$ invariants (AKA first integrals or constants of motion) for a Hamiltonian system. This defines a curve in the remaining 1 d.o.f. along which the solution must lie. This can be seen as a consequence of the uniqueness theorem for differential equations (think back to the 2nd year maths course on D.E.s). In reality, we typically can't find a closed form expression for most of these conserved quantities and have no idea what they might be.
+
+It is possible that a (vanishingly) small change in the positions of the particles in phase space can lead to a large change in the state of the system and in the subsequent trajectories of the particles.
+This is similar to saying that the dynamics of a Hamiltonian system can switch abruptly from regular to chaotic motion, as some parameter of the system is varied. 
+Such quantities are not helpful in characterising the thermodynamics of the system.
+In statistical mechanics, we are interested in the invariant quantities that only change by a little when there is a small change in the microscopic variables of the system. 
+E.g. ${\bf x}\rightarrow {\bf x}+\delta {\bf x} \implies H\rightarrow H+\delta H$.
+
+One way to phrase this is to say that we want to consider systems where thr region in phase space where the system is evolving can be (almost) completely identified, for thermodynamic purposes, by the values of a (not too large) number of observable invariant quantities.
+
+\subsection*{Observables}
+In statistical mechanics, we say that an observable is a function defined on the phase space of the system that varies smoothly with changes in the representative point of the system.
+%(??? check details of QM??? This differs slightly from the situation in quantum mechanics where an observable is \emph{any} invariant quantity of the system (AKA first integral, AKA constant of motion). I.e. any operator that commutes with the Hamiltonian)
+
+The kinetic energy $\sum_i \frac{p_i}{2m_i}$ is an observable, while the function $\Theta = \prod_i \theta(r_0^2-r_i^2)$, where $\theta(x)$ is the Heaviside function, is not, since an arbitrarily small change in a position $r_i$ can lead to a finite change in $\Theta.$
+
+Other examples of (thermodynamic) observables include the internal energy $E$ (i.e. the Hamiltonian) and the number of particles in the system ($N = \int d{\bf r}\sum\delta({\bf r}-{\bf r}_i)$).
+It turns out that the entropy $S=S(X_0=E=H,X_1,\ldots,X_r)$ is also an observable. However, we don't yet have a way to express the entropy --- the extensive variable of a thermodynamic system --- as a function of the microscopic state of the system and its equations of motion. To do so, we are going to invoke the fundamental postulate of statistical mechanics.
+
+\subsection*{The fundamental postulate of statistical mechanics}
+The fundamental postulate expresses the entropy $S$ as a function of the accessible volume of the phase space of a dynamical system. I.e. that part of the phase space where the observables have values that are compatible with a specific thermodynamic state.
+
+Assume that the thermodynamic state of a system is determined by the extensive variables $X_1,\ldots,X_r$ and that each of the $X_i$ can be expressed as a function over the microscopic phase space; I.e. $X_i = X_i({\bf x})$.
+The region of phase space that is accessible is defined by the value of $X = (X_1,\ldots,X_r)$. Well, almost; we actually also allow for small discrepancies $\epsilon_i,~~i=1,\ldots,r$ to account for the effect of any non-extensive terms.
+
+We denote the region of phase space in which the observable $X_i$ have the specific values that match the thermodynamic state as $\Gamma$ and we denote the corresponding phase space volume $\text{vol}(\Gamma)=\Omega$. Then the fundamental postulate of thermodynamics states that
+\begin{equation}
+	S = k_B\ln(\Omega),
+	\label{eqS}
+\end{equation}
+where $S$ is the thermodynamic entropy, $K_B$ is Boltzmann's constant ($K_B = 1.384\times10^{-23}$J/K) and the equality should be interpreted as meaning ``is equal, up to terms of size $\epsilon_i$''. The accessible phase space volume $\Omega$ measures the amount of the phase space available to the microscopic system while it is in this macroscopic state. If the system had only discrete micro-states, then we could simply count the number of micro-states that correspond to the same macro-state. We therefore identify $\Omega$ with the partition function.
+
+\subsection*{Symplectic transformations and phase space area preservation}
+Why is phase space so important in the formulation of entropy? To understand this we are going to look closer at some of the properties that being Hamiltonian impose on a system, including the choice of coordinate system.
+
+We saw earlier that the equations of motion for a time-independent Hamiltonian system can be written as$ \frac{d{\bf x}}{dt} = f({\bf x}) = J^{-1}\nabla H({\bf x})$. This Hamiltonian form is not preserved by arbitrary coordinate transformations; it \emph{is} preserved by \emph{symplectic} transformations.
+
+{\bf Definition:} A linear transformation $A: \mathbb{R}^{2d}\rightarrow\mathbb{R^{2d}}$ is said to be symplectic if it satisfies
+$$ A^\top J A = J.$$
+For a non-linear transformation $\mathcal{A}$, we replace $A$ above with its jacobian $D\mathcal{A}$.
+
+An alternative, but equivalent, definition of a symplectic transformation --- and one that will turn out to be useful in a bit --- borrows some tools from differential geometry. (No prior experience with differential geometry is assumed.)
+
+{\bf Definitions:} A symplectic transformation is a diffeomorphisim (a smooth, invertible mapping between manifolds) $f:\mathbb{R}^{2d}\rightarrow\mathbb{R}^{2d}$, with coordinates $r$ and $p$, which preserves the symplectic two-form $\omega$ (an anti-symmetric, bilinear form) that acts on pairs of vectors and gives the sum of the oriented areas that they define. In two dimensions, this is the area of the parallelogram spanned by the two vectors.
+
+More explicitly,
+\begin{equation*}
+	\omega(u,v) = u^\top Jv = \sum_{i=1}^d u_{p_i} v_{r_i} - u_{r_i} v_{p_i}.
+\end{equation*}
+
+At this point it is necessary to introduce a (potentially) new concept --- the flow map of a vector field. The flow $\varphi_{t,f}({\bf x})$ of a Hamiltonian system is a function that maps a point ${\bf x}^*$ in the phase space of the system with equations of motion $\dot{\bf x} = f({\bf x}) =J^{-1}\nabla H({\bf x})$ forward by time $t$. I.e. for any $f({\bf x})$ and ${\bf x}_0$, $\varphi_{t,f}({\bf x}_0)$ gives the solution to $\dot{\bf x}=f({\bf x})$ at time $t$.
+
+{\bf Theorem:} If the Hamiltonian $H({\bf x})$ is a twice differentiable function on some neighbourhood of $\mathbb{R}^{2d}$, then the time-$t$ flow map $\varphi_{t,f}({\bf x}_0)$ of the Hamiltonian vector field is a symplectic map for all $t$.
+{\bf Proof:} We will show that $\omega(u,v)=u^\top J v$ is constant along solutions of $\dot{\bf x} = J^{-1}\nabla H({\bf x})$.
+
+The tangent vector $u(t) = \frac{\partial \varphi_t}{\partial {\bf x}_0}({\bf x}_0)u(0)$ satisfies $\frac{du}{dt} = J^{-1}\nabla^2H({\bf x}(t))u(t)$ and the tangent vector $v(t)$ satisfies a similar expression. Now we can calculate the time derivative of $\omega(u,v)$.
+\begin{eqnarray*}
+	\frac{d}{dt}\omega(u,v) &=& \dot{u}^{\top}Jv+u^\top J\dot{v}\\
+		&=& (J^{-1}\nabla^2Hu)^\top Jv + u^\top JJ^{-1}\nabla^2Hv\\
+		&=& 0
+\end{eqnarray*}
+since $J^{-\top}=(J^{-1})^\top$, $J^{-\top}J=-I$ and $JJ^{-1} = I$.
+
+I.e. as the system evolves according to its equations of motion, it always preserves the area for $d=1$, or the sum of the oriented areas for $d \geq2$.
+
+
+\subsection*{Liouville's theorem and preservation of phase space volume}
+We are now in a position to prove that the flow of a Hamiltonian system preserves phase space volume. That is, for every bounded, open set $A\subset\mathcal{R}^{2d}$ and every $t$ for which $\varphi_{t,f}({\bf x})$ exists
+$$\text{Vol}(\varphi_{t,f}(\Gamma))=\text{Vol}(\Gamma)$$
+where $f=J^{-1}\nabla H$ and $\text{Vol}(\Gamma) = \int_{\Gamma}d{\bf x}$.
+
+To prove this, we will actually prove a slightly more general case: the flow of a differential equation $\dot{\bf x}=f({\bf x})$ in $\mathbb{R}^n$ is volume preserving if and only if it is divergence free. I.e. $\nabla\cdot f=0$.
+
+But first, why do we care about preservation of phase space volume? The fundamental postulate of statistical mechanics, $S=k_B\ln(\Omega)$ related the entropy of a system to the volume of the part of the phase space accessible to that system when it is in that particular thermodynamic state. We would like to be sure that this quantity doesn't vary too much over time as the microscopic system evolves, according to the Hamiltonian equations of motion. Although the microscopic system might be in continuous motion, the trajectories of the particles it is comprised of are such that the extensive variables which characterise the macroscopic state of the system are (almost) constant. I.e. there is no change in entropy, no heat flow, no work done while the system is at equilibrium. This is reassuring --- it says that disorder doesn't increase unless something happens.
+
+{\bf Proof: volume preservation:}
+The Jacobian of the flow map $\varphi_{t,f}({\bf x}_0)$ defines the matrix function $X(t)=D\varphi_{t,f}({\bf x}_0)$. The volume of the shape spanned by the columns of $X$ is given by $\det(X)$, and $X(t)$ is a solution of the equation
+$$
+\dot{X}=A(t)X(t),\qquad X(0)=I,
+$$
+where $A(t):=Df({\bf x}(t))$ denotes the Jacobian of $f({\bf x}(t))$ evaluated at ${\bf x}(t)=\varphi_{t,f}({\bf x}_0)$. To show that the volume defined by $X$ is constant we use  the Abel-Liouville-Jacobi-Ostrogradskii identity to find the time derivative of $\det X$:
+$$
+\frac{d}{dt}\det X(t)=\text{trace} A(t)\cdot\det X(t).
+$$
+Since $A(t)=Df({\bf x}(t))$ we have $\text{trace} A(t)=\sum_i\frac{\partial f_i}{\partial {\bf x}_i}({\bf x}(t))=\nabla\cdot f({\bf x}(t))$ and therefore $\det X(t)=\det X(0)=1$ if and only if $\nabla\cdot f({\bf x})=0.$
+
+\subsection*{Recommended reading}
+This section has mostly followed the first half of chapter 3 of \emph{Statistical Mechanics in a Nutshell}. However, some of the significance of Hamiltonian systems is lost in SMiaN, so I've supplemented it with more substantive (mathematically oriented) details from \emph{Geometric Numerical Integration} by E. Hairer, Ch. Lubich and G. Wanner (Springer, 2006) --- one of the best books on (the numerics of) Hamiltonian dynamical systems and a personal favourite.
+
+\section*{Molecular dynamics and simulating Hamiltonian Systems}
+
+Much of the point of statistical mechanics is to \emph{avoid} dealing with the dynamics of microscopic systems by studying their aggregate (or extensive) properties in a statistical fashion. Given this, and the computational challenges of dealing with the dynamics of very large numbers of (probably interacting) particles, you might think that direct simulations don't have much or a role to play in statistical mechanics. But:
+\begin{itemize}
+	\item It isn't always tractable (or it's just plain difficult) to find analytical expressions or sufficiently accurate approximations to all stat mech systems.
+	\item Computing power is increasingly cheap and the size/complexity of the systems that we can study via simulation are always improving.
+	\item Simulations let us directly test assumptions about what effects are important to a system by, for example, simulating a different interaction term or different geometries.
+	\item There are many simulation approaches where clever heuristics allow us to deal with much larger systems than might be expected, while still getting the physics correct. (E.g. Monte Carlo methods --- see Shaun's content.) In some cases physical laws, such as energy-conservation, or preservation of phase space volume can be ``baked in'' to the simulation, such that the simulation automatically preserves the appropriate behaviour.
+\end{itemize}
+
+We're going to look in more detail at this last point --- how we might ensure that we can run a simulation for  that preserves physical laws. The context that we are going to look at is molecular dynamics.
+
+As you might expect from the previous section, such systems can be described by specifying a Hamiltonian where the kinetic energy component takes the familiar form
+$$ T = \sum_i \frac{{\bf p}_i^2}{2m_i},$$
+where the $p_i$ are the momenta of the molecules and $m_i$ are their masses.
+
+Interactions between particles are described by $U$, the potential term of the Hamiltonian. About the simplest model would be to treat each particle as a hard sphere, with no interactions between them, except during collisions.
+An interaction term that is only slightly more complicated, but is much more realistic, is given by the Lennard-Jones potential:
+$$
+	U(r_{ij}) = 4\epsilon_{ij}\left(\left(\frac{\sigma_{ij}}{r_{ij}}\right)^{12} - 2\left(\frac{\sigma_{ij}}{r_{ij}}\right)^{6}\right),
+$$
+where $|r_{ij}| = |r_i-r_j|$ are the inter-atomic separations. It's not hard to see that the potential has an absolute minimum at $r = \sigma$ --- this corresponds to the equilibrium separation between atoms. (Omitting the factor of 2 in the potential means the location of the minimum picks up a factor of $2^{-6}$.)The $\epsilon_{ij}$ terms gives the depth of the potential well --- the strength of the inter-atomic attraction. 
+
+As a brief historical aside, the $r^{-6}$ term in the potential can be derived mathematically as the attraction due to induced-dipole -- induced dipole interaction. This was known before Lennard-Jones, whose contribution was to include a term for the repulsion when the inter-atomic distance gets very small (Pauli repulsion due to overlapping wave-functions for electrons that are closer than the preferred bonding distance --- but that is getting into condensed matter physics). The repulsion term is actually exponential, rather than $r^{-12}$, but Lennard-Jones decided that $r^{-12}$ is pretty close to an exponential, and is much easier to calculate. Once you already know $r^{-6}$ you can just square it and save yourself a (relatively) expensive calculation of an exponential.
+
+It is worth noting that the pairwise interactions in the Lennard-Jones potential mean that for $N$ particles we must calculate $N^2$ interaction terms. Clearly, this can make trouble once N gets large. One common approach is to use a \emph{long-range cut-off} and only calculate the interaction terms for atoms that are less than some distance $L$ away, or perhaps, only for those inside a unit cell, with sides of length $L$.
+
+Regardless of the exact nature of the interaction term, we typically end up dealing with a Hamiltonian of the form 
+$$
+	H({\bf r},{\bf p}) = T({\bf p}) + U({\bf r}).
+$$
+
+Since $M\dot{\bf r} = {\bf p}$ and $M\ddot{\bf r} = \dot{\bf p}$ the equations of motion for the system can be written as
+\begin{equation}
+	M\ddot{\bf r} = f({\bf r}) = -\nabla U({\bf r}).
+	\label{eq:2vf}
+\end{equation}
+That is, we can turn the set of $2d$ first-order differential equations in ${\bf r}$ and ${\bf p}$ into $d$ second order differential equation in ${\bf r}$.
+
+\subsection*{Numerical integration}
+Given the equations of motion (or the Hamiltonian) that describes a system, and some compatible initial conditions ${\bf r}(0)$, we want to find the state of the system at some time $T$ in the future (or the solution along some interval $[0,T]$). We do this by breaking the interval into small enough time steps of size $h$ and discretizing the solution ${\bf r}(t)$ as ${\bf r}_n = {\bf r}(t_n) $ where $t_n = nh$.
+
+The simplest approach to approximating the discrete solution is the explicit \emph{Euler method}. It approximates the solution at $r(t_{n+1})=r_{n+1}$ with
+$$
+	r_{n+1} = r_n + h \dot{r}_n.
+$$
+That is, it evaluates the differential equation at the current time step and approximates the solution with a straight line of slope $\dot{r}_n$. 
+
+[You can add a diagram to illustrate this - even a hand drawn example.]
+
+The error in the approximation of the solution by the explicit Euler method grows in proportion to the step size $h$, that is $\|r_N-r(Nh)\|=\mathcal{O}(h)$. We therefore say that the method is fist order accurate.
+
+While the explicit Euler method is very easy to implement, it has a number of issues (you'll see one of them in the assignment). These include the fact that it becomes unstable (the error in its approximation starts to grow exponentially) when the step size is too large. The implicit Euler (like the explicit Euler method, but the derivative is evaluated at the end of the time step i.e.$f(r_{n+1})$) method avoids this issue, but at the cost of needing to iteratively solve an implicit equation $r_{n+1}=r_n+hf(r_{n+1})$. It is still only first order.
+
+A better approach to numerical integration is to use the Verlet (AKA St\"{o}rmer, AKA leap-frog) method. This is most easily understood in its two-step formulation (i.e. the method requires information from two previously known time steps ($t_{n-1}$ and $t_n$) in order to compute the approximation at the future time step $t_{n+1}$). The approximation is then given by 
+\begin{equation}
+	r_{n+1} - 2r_n + r_{n-1} = h^2f(r_n),
+	\label{eq:2lf}
+\end{equation}
+where $f(r)$ is the second order differential equation in equation \ref{eq:2vf}. It's not hard to see (you should verify it yourself) that the LHS of \ref{eq:2lf} is an approximation of the second derivative at the point $r_n$.
+The two-step formulation of the leapfrog method can therefore be seen as determining a parabola that interpolates the points $r_{n-1},~r_{n},$ and $r_{n+1}$ and matches the second derivative at the midpoint.
+
+It turns out that, for a number of reasons, it is better to work with the Verlet method in its one-step formulation. This can be derived by introducing the velocity $v=\dot{r}$ and turning equation \ref{eq:2vf} back into a first-order system of twice the dimension
+$$
+	\dot{r} = v,\qquad \dot{v} = f(r).
+$$
+
+We then introduce discrete approximations of $r$ and $v$ as follows:
+$$
+v_n =\frac{r_{n+1}-r_{n-1}}{2h},\qquad v_{n-\frac12} = \frac{r_n-r_{n-1}}{h}, \qquad r_{n-\frac12} = \frac{r_n + r_{n-1}}{2},
+$$
+where some of the derivatives have been evaluated on a staggered grid. We can then use these to formulate a one-step version of the Verlet method. 
+\begin{eqnarray*}
+	v_{n+\frac12} &=& v_n+\frac{h}{2}f(r_n),\\
+	r_{n+1} &=& r_n +hv_{n+\frac12},\\
+	v_{n+1} &=& v_{n+\frac12}+\frac{h}{2}f(r_{n+1}).
+\end{eqnarray*}
+There is also a dual formulation of the method that gives the values of $r$ and $v$ on the staggered grid points $t_{n-\frac12},t_{n+\frac12},$ etc.
+(It makes sense to think of the one-step method as a discrete map $\Phi_h$, similar to the flow map $\phi_{f,t}$ that maps from the known solution, to it's approximation one time step forward.)
+
+If the velocity values are not needed at the end of each step, then the last line of one step can be combined with the first line of the next step to avoid one evaluation of $f$ per step by only calculating $v$ on the staggered grid:
+\begin{eqnarray*}
+	v_{n+\frac12} &=& v_{n-\frac12}+hf(r_n),\\
+	r_{n+1} &=& r_n +hv_{n+\frac12}.
+\end{eqnarray*}
+This is the most computationally efficient of the Verlet method. It is also numerically more stable than the two-step formulation.
+
+It is not too hard to show (you should prove it for yourself) that the Verlet method is symplectic. That is the discrete map that it defines preserves the symplectic form that we saw earlier. This is almost, but not quite the same as preserving the value of the associated Hamiltonian along solutions of the vector field. In fact, it is possible to show (but trickier than proving symplecticity) that the difference between the value of the Hamiltonian evaluated along the discrete approximation from the Verlet method differs only exponentially slowly from the exact value of the Hamiltonian for the true solution. This makes the Verlet method a popular choice for molecular dynamics. In addition to having good stability and being easy to implement, it is automatically almost energy-preserving. The Verlet method is second order accurate, that is the error in the solution $\|x_{nh}-x(nh)\|=\mathcal{O}(h^2)$.
+
+Now that we have a suitable method for calculating the micro-state of a system at some point in the future, we can look for ways to measure macroscopic quantities from the solution. It is worth bearing in mind that for any simulations, the initial conditions use are unlikely to correspond to representative configuration for the system, it is good practise let the simulation run for a period of time (perhaps a few thousand time steps) before attempting to measure any properties. This process is known as equilibration or thermalization.
+
+Using simulated particle trajectories usually means we simplicity invoke an assumption of \emph{ergodicity}. This essentially says that averaging of a solution, for a long enough time period for a system, is equivalent to averaging over a large number of initial conditions for the same system, where the initial conditions correspond to the same macro-sate of the system.
+
+We have seen earlier that we identify the temperature of a thermodynamic system with the average square velocities of the particles in the system with some suitable normalisation. The temperature of our simulated system, with $N$ particles is therefore given by
+$$
+	T(p) = \frac{1}{Nk_B}\sum_{i=1}^N\frac{1}{2m_i}\|p_i\|^2.
+$$
+
+Other easily computable quantities include the virial function (we haven't mentioned this yet, but it is used to relate the total potential energy of a system to the total kinetic energy and can be used to calculate the pressure of a system --- see pp 255--256 of \emph{Statistical Mechanics in a Nutshell}):
+$$
+	C(r) = \sum_{i=2}^N\sum_{j=1}^{i-1}\nabla U(r_{ij})r_{ij},
+$$
+
+and the constant volume specific heat:
+$$
+	C_v = k_B\left[\frac{2}{3N}-\frac{4}{9}\frac{\langle(T-\langle T\rangle)^2\rangle}{\langle T\rangle^2}\right]^{-1}.
+$$
 
 
 
