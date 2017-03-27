@@ -539,7 +539,7 @@ Much of the point of statistical mechanics is to \emph{avoid} dealing with the d
 	\item There are many simulation approaches where clever heuristics allow us to deal with much larger systems than might be expected, while still getting the physics correct. (E.g. Monte Carlo methods --- see Shaun's content.) In some cases physical laws, such as energy-conservation, or preservation of phase space volume can be ``baked in'' to the simulation, such that the simulation automatically preserves the appropriate behaviour.
 \end{itemize}
 
-We're going to look in more detail at this last point --- how we might ensure that we can run a simulation for  that preserves physical laws. The context that we are going to look at is molecular dynamics.
+We're going to look in more detail at this last point --- how we might ensure that we can run a simulation that preserves physical laws. The context that we are going to look at is molecular dynamics.
 
 As you might expect from the previous section, such systems can be described by specifying a Hamiltonian where the kinetic energy component takes the familiar form
 $$ T = \sum_i \frac{{\bf p}_i^2}{2m_i},$$
@@ -548,18 +548,33 @@ where the $p_i$ are the momenta of the molecules and $m_i$ are their masses.
 Interactions between particles are described by $U$, the potential term of the Hamiltonian. About the simplest model would be to treat each particle as a hard sphere, with no interactions between them, except during collisions.
 An interaction term that is only slightly more complicated, but is much more realistic, is given by the Lennard-Jones potential:
 $$
-	U(r_{ij}) = 4\epsilon_{ij}\left(\left(\frac{\sigma_{ij}}{r_{ij}}\right)^{12} - 2\left(\frac{\sigma_{ij}}{r_{ij}}\right)^{6}\right),
+	U({\bf r}) = 4\epsilon_{ij}\left(\left(\frac{\sigma_{ij}}{r_{ij}}\right)^{12} - 2\left(\frac{\sigma_{ij}}{r_{ij}}\right)^{6}\right),
 $$
-where $|r_{ij}| = |r_i-r_j|$ are the inter-atomic separations. It's not hard to see that the potential has an absolute minimum at $r = \sigma$ --- this corresponds to the equilibrium separation between atoms. (Omitting the factor of 2 in the potential means the location of the minimum picks up a factor of $2^{-6}$.)The $\epsilon_{ij}$ terms gives the depth of the potential well --- the strength of the inter-atomic attraction. 
+where $|r_{ij}| = |r_i-r_j|$ are the inter-atomic separations. It's not hard to see that the potential has an absolute minimum at $r = \sigma$ --- this corresponds to the equilibrium separation between atoms. (Omitting the factor of 2 in the potential means the location of the minimum picks up a factor of $2^{-6}$.) The $\epsilon_{ij}$ terms gives the depth of the potential well --- the strength of the inter-atomic attraction. 
 
 As a brief historical aside, the $r^{-6}$ term in the potential can be derived mathematically as the attraction due to induced-dipole -- induced dipole interaction. This was known before Lennard-Jones, whose contribution was to include a term for the repulsion when the inter-atomic distance gets very small (Pauli repulsion due to overlapping wave-functions for electrons that are closer than the preferred bonding distance --- but that is getting into condensed matter physics). The repulsion term is actually exponential, rather than $r^{-12}$, but Lennard-Jones decided that $r^{-12}$ is pretty close to an exponential, and is much easier to calculate. Once you already know $r^{-6}$ you can just square it and save yourself a (relatively) expensive calculation of an exponential.
 
-It is worth noting that the pairwise interactions in the Lennard-Jones potential mean that for $N$ particles we must calculate $N^2$ interaction terms. Clearly, this can make trouble once N gets large. One common approach is to use a \emph{long-range cut-off} and only calculate the interaction terms for atoms that are less than some distance $L$ away, or perhaps, only for those inside a unit cell, with sides of length $L$.
+It is worth noting that the pairwise interactions in the Lennard-Jones potential mean that for $N$ particles we must calculate $N^2$ interaction terms. Clearly, this can cause issues once N gets large. One common approach is to use a \emph{long-range cut-off} and only calculate the interaction terms for atoms that are less than some distance $L$ away, or perhaps, only for those inside a unit cell, with sides of length $L$.
 
-Regardless of the exact nature of the interaction term, we typically end up dealing with a Hamiltonian of the form 
+Regardless of the exact nature of the interaction term, we end up dealing with a Hamiltonian of the form 
 $$
 	H({\bf r},{\bf p}) = T({\bf p}) + U({\bf r}).
 $$
+
+\subsection*{Numerical integration}
+Given the equations of motion (or the Hamiltonian) that describes a system, and some compatible initial conditions ${\bf r}(0)$, we want to find the state of the system at some time $T$ in the future (or the solution along some interval $[0,T]$). We do this by breaking the interval into small enough time steps of size $h$ and discretizing the solution ${\bf r}(t)$ as ${\bf r}_n = {\bf r}(t_n) $ where $t_n = nh$.
+
+The simplest approach to approximating the discrete solution is the \emph{explicit Euler method}. It approximates the solution at ${\bf r}(t_{n+1})\simeq {\bf r}_{n+1}$ with
+$$
+	{\bf r}_{n+1} = {\bf r}_n + h \dot{\bf r}_n.
+$$
+That is, it evaluates the differential equation at the current time step and approximates the solution with a straight line of slope $\dot{\bf r}_n$. 
+
+[You can add a diagram to illustrate this - even a hand drawn example.]
+
+The error in the approximation of the solution by the explicit Euler method grows in proportion to the step size $h$, that is $\|{\bf r}_N-{\bf r}(Nh)\|=\mathcal{O}(h)$. We therefore say that the method is fist order accurate.
+
+While the explicit Euler method is very easy to implement, it has a number of issues (you'll see one of them in the assignment). These include the fact that it becomes unstable (the error in its approximation starts to grow exponentially) when the step size is too large. The \emph{implicit Euler} (like the explicit Euler method, but the derivative is evaluated at the end of the time step i.e.$f(r_{n+1})$) method avoids this issue, but at the cost of needing to iteratively solve an implicit equation $r_{n+1}=r_n+hf(r_{n+1})$. It is still only first order.
 
 Since $M\dot{\bf r} = {\bf p}$ and $M\ddot{\bf r} = \dot{\bf p}$ the equations of motion for the system can be written as
 \begin{equation}
@@ -567,75 +582,229 @@ Since $M\dot{\bf r} = {\bf p}$ and $M\ddot{\bf r} = \dot{\bf p}$ the equations o
 	\label{eq:2vf}
 \end{equation}
 That is, we can turn the set of $2d$ first-order differential equations in ${\bf r}$ and ${\bf p}$ into $d$ second order differential equation in ${\bf r}$.
+In much of what follows, I'm going to omit the mass matrix and write $\ddot{\bf r} = f({\bf r})$. This is purely for convenience. Everything still holds when $M$ takes other values for the masses --- just make sure to include a factor of $M^{-1}$ in the $f({\bf r})$ term.
 
-\subsection*{Numerical integration}
-Given the equations of motion (or the Hamiltonian) that describes a system, and some compatible initial conditions ${\bf r}(0)$, we want to find the state of the system at some time $T$ in the future (or the solution along some interval $[0,T]$). We do this by breaking the interval into small enough time steps of size $h$ and discretizing the solution ${\bf r}(t)$ as ${\bf r}_n = {\bf r}(t_n) $ where $t_n = nh$.
-
-The simplest approach to approximating the discrete solution is the explicit \emph{Euler method}. It approximates the solution at $r(t_{n+1})=r_{n+1}$ with
-$$
-	r_{n+1} = r_n + h \dot{r}_n.
-$$
-That is, it evaluates the differential equation at the current time step and approximates the solution with a straight line of slope $\dot{r}_n$. 
-
-[You can add a diagram to illustrate this - even a hand drawn example.]
-
-The error in the approximation of the solution by the explicit Euler method grows in proportion to the step size $h$, that is $\|r_N-r(Nh)\|=\mathcal{O}(h)$. We therefore say that the method is fist order accurate.
-
-While the explicit Euler method is very easy to implement, it has a number of issues (you'll see one of them in the assignment). These include the fact that it becomes unstable (the error in its approximation starts to grow exponentially) when the step size is too large. The implicit Euler (like the explicit Euler method, but the derivative is evaluated at the end of the time step i.e.$f(r_{n+1})$) method avoids this issue, but at the cost of needing to iteratively solve an implicit equation $r_{n+1}=r_n+hf(r_{n+1})$. It is still only first order.
-
-A better approach to numerical integration is to use the Verlet (AKA St\"{o}rmer, AKA leap-frog) method. This is most easily understood in its two-step formulation (i.e. the method requires information from two previously known time steps ($t_{n-1}$ and $t_n$) in order to compute the approximation at the future time step $t_{n+1}$). The approximation is then given by 
+A better approach to numerical integration is to use the Verlet (AKA St\"{o}rmer, AKA leap-frog) method. This is most easily understood in its \emph{two-step formulation} (i.e. the method requires information from two previously known time steps ($t_{n-1}$ and $t_n$) in order to compute the approximation at the future time step $t_{n+1}$). The approximation is given by 
 \begin{equation}
-	r_{n+1} - 2r_n + r_{n-1} = h^2f(r_n),
+	\frac{{\bf r}_{n+1} - 2{\bf r}_n + {\bf r}_{n-1}}{h^2} = f({\bf r}_n),
 	\label{eq:2lf}
 \end{equation}
-where $f(r)$ is the second order differential equation in equation \ref{eq:2vf}. It's not hard to see (you should verify it yourself) that the LHS of \ref{eq:2lf} is an approximation of the second derivative at the point $r_n$.
-The two-step formulation of the leapfrog method can therefore be seen as determining a parabola that interpolates the points $r_{n-1},~r_{n},$ and $r_{n+1}$ and matches the second derivative at the midpoint.
+where $f({\bf r})$ is the second order differential equation in equation \ref{eq:2vf}. It's not hard to see (you should verify it yourself) that the LHS of \ref{eq:2lf} is an approximation of the second derivative at the point ${\bf r}_n$.
 
-It turns out that, for a number of reasons, it is better to work with the Verlet method in its one-step formulation. This can be derived by introducing the velocity $v=\dot{r}$ and turning equation \ref{eq:2vf} back into a first-order system of twice the dimension
+[add a picture to illustrate this]
+
+The two-step formulation of the leapfrog method can therefore be seen as determining a parabola that interpolates the points ${\bf r}_{n-1},~{\bf r}_{n},$ and ${\bf r}_{n+1}$ and matches the second derivative at the midpoint.
+
+It turns out that, for a number of reasons, it is better to work with the Verlet method in its one-step formulation. This can be derived by introducing the velocity $v=\dot{\bf r}$ and turning equation \ref{eq:2vf} back into a first-order system of twice the dimension
 $$
-	\dot{r} = v,\qquad \dot{v} = f(r).
+	\dot{\bf r} = {\bf v},\qquad \dot{\bf v} = f({\bf r}).
 $$
 
 We then introduce discrete approximations of $r$ and $v$ as follows:
 $$
 v_n =\frac{r_{n+1}-r_{n-1}}{2h},\qquad v_{n-\frac12} = \frac{r_n-r_{n-1}}{h}, \qquad r_{n-\frac12} = \frac{r_n + r_{n-1}}{2},
 $$
-where some of the derivatives have been evaluated on a staggered grid. We can then use these to formulate a one-step version of the Verlet method. 
+where some of the values have been calculated on a staggered grid. We can then use these to formulate a one-step version of the Verlet method. 
 \begin{eqnarray*}
-	v_{n+\frac12} &=& v_n+\frac{h}{2}f(r_n),\\
-	r_{n+1} &=& r_n +hv_{n+\frac12},\\
-	v_{n+1} &=& v_{n+\frac12}+\frac{h}{2}f(r_{n+1}).
+	{\bf v}_{n+\frac12} &=& {\bf v}_n+\frac{h}{2}f({\bf r}_n),\\
+	{\bf r}_{n+1} &=& {\bf r}_n +h{\bf v}_{n+\frac12},\\
+	{\bf v}_{n+1} &=& {\bf v}_{n+\frac12}+\frac{h}{2}f({\bf r}_{n+1}).
 \end{eqnarray*}
-There is also a dual formulation of the method that gives the values of $r$ and $v$ on the staggered grid points $t_{n-\frac12},t_{n+\frac12},$ etc.
-(It makes sense to think of the one-step method as a discrete map $\Phi_h$, similar to the flow map $\phi_{f,t}$ that maps from the known solution, to it's approximation one time step forward.)
 
-If the velocity values are not needed at the end of each step, then the last line of one step can be combined with the first line of the next step to avoid one evaluation of $f$ per step by only calculating $v$ on the staggered grid:
+[Add a picture to illustrate this]
+
+There is also a dual formulation of the method that gives the values of ${\bf r}$ and ${\bf v}$ on the staggered grid points $t_{n-\frac12},t_{n+\frac12},$ etc.
+(It makes sense to think of the one-step method as a discrete map $\Phi_h$, similar to the flow map $\varphi_{f,t}$ that maps from the known solution, to its approximation one time step forward.)
+
+If the velocity values are not needed at the end of each step, then the last line of one step can be combined with the first line of the next step to avoid one evaluation of $f$ per step by only calculating ${\bf v}$ on the staggered grid:
 \begin{eqnarray*}
-	v_{n+\frac12} &=& v_{n-\frac12}+hf(r_n),\\
-	r_{n+1} &=& r_n +hv_{n+\frac12}.
+	{\bf v}_{n+\frac12} &=& {\bf v}_{n-\frac12}+hf({\bf r}_n),\\
+	{\bf r}_{n+1} &=& {\bf r}_n +h{\bf v}_{n+\frac12}.
 \end{eqnarray*}
-This is the most computationally efficient of the Verlet method. It is also numerically more stable than the two-step formulation.
+This is the most computationally efficient form of the Verlet method. It is also numerically more stable than the two-step formulation.
 
-It is not too hard to show (you should prove it for yourself) that the Verlet method is symplectic. That is the discrete map that it defines preserves the symplectic form that we saw earlier. This is almost, but not quite the same as preserving the value of the associated Hamiltonian along solutions of the vector field. In fact, it is possible to show (but trickier than proving symplecticity) that the difference between the value of the Hamiltonian evaluated along the discrete approximation from the Verlet method differs only exponentially slowly from the exact value of the Hamiltonian for the true solution. This makes the Verlet method a popular choice for molecular dynamics. In addition to having good stability and being easy to implement, it is automatically almost energy-preserving. The Verlet method is second order accurate, that is the error in the solution $\|x_{nh}-x(nh)\|=\mathcal{O}(h^2)$.
+It is not too hard to show (you should prove it for yourself) that the Verlet method is symplectic. That is, the discrete map that it defines preserves the symplectic form that we saw earlier. This is almost, but not quite the same as preserving the value of the associated Hamiltonian along solutions of the vector field. In fact, it is possible to show (but trickier than proving symplecticity) that the difference between the value of the Hamiltonian evaluated along the discrete approximation from the Verlet method differs only exponentially slowly from the exact value of the Hamiltonian for the true solution. This makes the Verlet method a popular choice for molecular dynamics. In addition to having good stability and being easy to implement, it is automatically almost energy-preserving.
 
-Now that we have a suitable method for calculating the micro-state of a system at some point in the future, we can look for ways to measure macroscopic quantities from the solution. It is worth bearing in mind that for any simulations, the initial conditions use are unlikely to correspond to representative configuration for the system, it is good practise let the simulation run for a period of time (perhaps a few thousand time steps) before attempting to measure any properties. This process is known as equilibration or thermalization.
+The Verlet method is \emph{symmetric} (replacing $h$ with $-h$ and swapping the subscripts $n$ and $n+1$ gives the same method again) and \emph{reversible} (changing the sign on the velocity for the initial condition is the same as running the method in reverse).It is also second order accurate; that is the error in the solution $\|{\bf x}_{Nh}-{\bf x}(Nh)\|=\mathcal{O}(h^2)$.
 
-Using simulated particle trajectories usually means we simplicity invoke an assumption of \emph{ergodicity}. This essentially says that averaging of a solution, for a long enough time period for a system, is equivalent to averaging over a large number of initial conditions for the same system, where the initial conditions correspond to the same macro-sate of the system.
+Now that we have a suitable method for calculating the micro-state of a system at some point in the future, we can look for ways to measure macroscopic quantities from the solution. It is worth bearing in mind that for any simulations, the initial conditions used are unlikely to correspond to a representative configuration for the system. It is therefore good practise to let the simulation run for a period of time (perhaps a few thousand time steps) before attempting to measure any properties. This process is known as equilibration or thermalization.
+
+Using simulated particle trajectories usually means we implicitly invoke an assumption of \emph{ergodicity}. This essentially says that averaging an observable along a solution, for a long enough time period for a system, is equivalent to averaging that observable over a large number of initial conditions for the same system, where the initial conditions correspond to the same macro-state of the system. While the hypothesis of ergodicity is useful, there are many real world cases where it doesn't hold --- for example any system that exhibits \emph{hysteresis} in which properties of the system are path dependent. Magnet systems, in particular, tend to display such properties. For more discussion of this, see section 4.0 of \emph{Statistical Mechanics in a Nutshell}.
 
 We have seen earlier that we identify the temperature of a thermodynamic system with the average square velocities of the particles in the system with some suitable normalisation. The temperature of our simulated system, with $N$ particles is therefore given by
 $$
-	T(p) = \frac{1}{Nk_B}\sum_{i=1}^N\frac{1}{2m_i}\|p_i\|^2.
+	T({\bf p}) = \frac{1}{Nk_B}\sum_{i=1}^N\frac{1}{2m_i}\|p_i\|^2.
 $$
 
-Other easily computable quantities include the virial function (we haven't mentioned this yet, but it is used to relate the total potential energy of a system to the total kinetic energy and can be used to calculate the pressure of a system --- see pp 255--256 of \emph{Statistical Mechanics in a Nutshell}):
+Another easily computable quantity is the virial function (we haven't mentioned this yet, but it is used to relate the total potential energy of a system to the total kinetic energy and can be used to calculate the pressure of a system --- see pp 255--256 of \emph{Statistical Mechanics in a Nutshell}):
 $$
-	C(r) = \sum_{i=2}^N\sum_{j=1}^{i-1}\nabla U(r_{ij})r_{ij},
+	C({\bf r}) = \sum_{i=2}^N\sum_{j=1}^{i-1}\nabla U(r_{ij})r_{ij},
+$$
+Both of these quantities give instantaneous values of the observables. Other quantities can be calculated as time averages of a solution of the system. For example, the constant volume specific heat:
+$$
+	C_v = k_B\left[\frac{2}{3N}-\frac{4}{9}\frac{\langle(T-\langle T\rangle)^2\rangle}{\langle T\rangle^2}\right]^{-1}
 $$
 
-and the constant volume specific heat:
+\subsection*{Recommended reading}
+\begin{itemize}
+	\item Sections 8.1 and 8.2 of \emph{Statistical Mechanics in a Nutshell}
+	\item \emph{Geometric numerical integration illustrated by the St\"{o}rmer–Verlet method}, E. Hairer, Ch. Lubich, and G. Wanner, Acta Numerica (2003)
+	\item Chapter 11 of \emph{Simulating Hamiltonian Dynamics}, B. Leimkuhler and S. Reich, Cambridge Univeristy Press (2004)
+\end{itemize}
+
+\section*{Ensembles}
+
+In the previous section, we considered an isolated system where we could keep track of the dynamics of every particle and use that to calculate the values of extensive, macroscopic properties of the system. An important aspect of this was the conservation of energy for the system. We refer to such systems as a \emph{micro-canonical ensemble} --- the system is isolated with no heat flux and no change in the number of particles, hence the internal energy of the system is constant and it is described entirely by the Hamiltonian dynamics
+
+We also saw (a couple of sections earlier) that we can equate the entropy of a system with the accessible volume of the phase space of that system. This was part of what motivated us to study the microscopic dynamics of the system using molecular dynamics.  We'd now like to consider some slightly more realistic cases where, for example, we may want to allow for multiple systems in contact.
+
+We'll start by considering the simplest case: two (isolated) systems in contact, without any exchange of energy. If the state of system 1 corresponds to the region of phase space $\Gamma^1$ and similarly, the state of system 2 to $\Gamma^2$ then the state of the composite system $1\cup 2$ corresponds to the phase space regions given by the Cartesian product $\Gamma^{1\cup 2}=\Gamma^1\times\Gamma^2$ and the volume of this accessible volume of phase space is given by $|\Gamma^{1\cup 2}|=|\Gamma^1||\Gamma^2|$. From this, it's easy to see that the entropy of the composite system is given by
+\begin{eqnarray*}
+	S &=& k_B\ln|\Gamma^{1\cup 2}| = k_B\ln(|\Gamma^1||\Gamma^2|)\\
+		&=& k_B\ln|\Gamma^1| + k_B\ln|\Gamma^2| = S^1 + S^2,
+\end{eqnarray*}
+which is fortunate, since entropy is an extensive variable and we therefore expect it to be additive.
+In this example the two sub-system were completely isolated from each other; the dynamics of one system had no influence on the dynamics of the other. This condition of dynamic independence corresponds to the independence of the observables that pertain to these sub-systems.
+
+Now, let's look at how the entropy of a composite system changes if we allow for the exchange of energy between the two sub-systems. This has the effect of increasing the accessible volume of the phase space, since exchange of energy means that there are more possible configurations for the overall system.
+
+Without energy exchange, the volume of the accessible phase space to the total system is given by
 $$
-	C_v = k_B\left[\frac{2}{3N}-\frac{4}{9}\frac{\langle(T-\langle T\rangle)^2\rangle}{\langle T\rangle^2}\right]^{-1}.
+	|\Gamma_0| = |\Gamma^1||\Gamma^2|.
 $$
+Once we allow for the exchange of energy, this becomes
+$$
+	|\Gamma| = \sum_{E^1}|\Gamma(E^1)||\Gamma^2(E_\text{tot}-E^1)|.
+$$
+That is, we must now consider all possible configurations where the total energy of the composite system is partitioned between the two sub-systems. This volume is bounded below by $|\Gamma_0|$ since the expression for $|\Gamma_0|$ is just one of the terms in the sum. At first glance, it may look like this increase in the volume of the accessible phase space is enormous (we have added many more possible configurations), however, the volume of the accessible phase space for the composite system corresponds almost entirely to the states where $E^1=E^1_\text{eqm}$ and $E^2=E^2_\text{eqm}$. As a consequence, for large enough $N$, the difference between $\Gamma$ and $|\Gamma^1(E^1_\text{eqm})|||\Gamma^2(E^2_\text{eqm})|$ is negligible. It's not too hard to show (see section 3.7 of \emph{Statistical Mechanics in a Nutshell}) that the contribution to the accessible phase space volume due to the exchange of energy between the two systems is of order $\sqrt{N}$ compared with the total system size $N$ --- small enough to be negligible when $N$ is large.
+
+\subsection*{The canonical ensemble}
+
+Rather than considering a perfectly isolated system, for which energy is conserved, a more realistic experimental situation may be to consider a system S in thermal contact with some much larger reservoir R. This has the effect of holding the total system at constant temperature. In such a situation we want to be able to calculate the average value $\langle A\rangle$ of an observable $A$ for the system S; we are not interested in the state of the reservoir R, except to the extent that it helps us determine the state of S.
+
+If, for the composite system S$\cup$R, we write $x_S,x_R$ for the state, te=hen the average value of the observable $A$ is given by
+$$
+	\langle A\rangle = \frac{1}{|\Gamma|}\int_{\Gamma}dx_Sdx_RA(x_s),
+$$
+where $\Gamma$ is the region of the phase space for the composite system, when it has total internal energy of $E$.
+
+In order to make explicit the parts of the total phase space that is accessible to the composite system, wewrite the above expression as the Cartesian product of the phase space for the system and the reservoir, i.e.
+$$
+	\langle A\rangle =\frac{1}{|\Gamma|}\int dx_SA(x_S)\times\int dx_R\delta(H^R(x_R)-(E-H^S(x_S))).
+$$
+The delta function in the last term is zero, except when $x_S$ and $x_R$ in the two sub-systems take values such that $H^S+H^R=E$. That is the delta function defines the accessible phase space volume when the two sub-systems can exchange internal energy between them, but the total internal energy of the composite system is conserved.
+
+Recalling the fundamental postulate of statistical mechanics ($S=k_B\ln|\Gamma|$), we rewrite the last expression to replace the phase space volume with the corresponding expression for entropy:
+$$
+	\int dx_R\delta(H^R(x_R)-(E-H^S(x_S))) \simeq \exp\left(\frac{1}{k_B}S^R(E-H^S)\right).
+$$
+
+Since $H^S$ is much less than $E$ it makes sense to now expand the exponential in a Taylor series about $E$:
+$$
+	\exp\left(\frac{1}{k_B}S^R(E-H^S)\right)\simeq \exp\left(\frac{1}{k_B}S^R(E)\right)\exp\left(\frac{-1}{k_B}\left.\frac{\partial S^R}{\partial E}\right|_E H^S(x_S)\right)\ldots
+$$
+
+Earlier in the course, we identified $\frac{\partial S}{\partial E}$ with $\frac{1}{T}$, and, for a canonical ensemble, $T$ is constant (that's the point of the reservoir) so we write the expected value of the observable as
+$$
+	\langle A\rangle \simeq \frac{1}{\Gamma}\int dx_sA(x_S)\times\exp\left(\frac{1}{k_B}s^R(E)\right)\exp\left(\frac{-H^S(x_S)}{k_BT}\right).
+$$
+
+It remains to make the normalisation precise. When we do this, the factors of $s\exp\left(\frac{1}{k_B}s^R(E)\right)$ cancel from the integral and its normalisation and we get
+\begin{equation}
+	\langle A\rangle = \frac{1}{Z}\int dx_SA(x_S)\exp\left(\frac{-H^S(x_S)}{k_BT}\right),
+	\label{eq:z1}
+\end{equation}
+where $Z$ is the known as the \emph{partition function} and is given by
+\begin{equation}
+	Z = \int dx_S\exp\left(\frac{-H^S(x_S)}{k_BT}\right).
+	\label{eq:z2}
+\end{equation}
+
+One way to think about equations \ref{eq:z1} and \ref{eq:z2} is that we no longer need to keep track of which parts of phase space are accessible. Instead we can integrate over the entire phase space and each region is weighted appropriately, according to $\exp\frac{-H}{k_BT}$ --- the so-called \emph{Boltzmann factor}, a probability density in the phase space.
+
+Similar to the case of the micro-canonical ensemble, for the canonical ensemble, the contributions to $A$ are dominated by the part of phase space that corresponds to when the system's internal energy is at the equilibrium value. 
+
+You should read through, and understand, section 3.12 of \emph{Statistical Mechanics in a Nutshell} and sections 4.1--4.3 of \emph{Statistical Mechanics Made Simple} for some extra details and explanation.
+
+\subsection*{Other ensembles}
+We can follow a similar approach to what we did for the canonical ensemble and generalise to other types of ensembles. If $f_i$ is some variable that we want to hold fixed and $X_i$ is the conjugate extensive variable, then putting the system in contact with a reservoir with which it can exchange $X_i$ gives
+\begin{equation*}
+	\langle A\rangle = \frac{1}{Z}\int dx_SA(x_S)\exp\left(\frac{f_iX^S_i(x_S)}{k_BT}\right),
+\end{equation*}
+where we have used the relation $\left.\frac{\partial S^R}{\partial X_i^R}\right|_E=-\frac{f_i}{T}$.
+
+Calculating the partition function proceeds similarly too, (see SMiaN, section 3.13) and gives
+\begin{equation*}
+	Z \simeq \exp\left(\frac{T^S(X_i^*)+f_iX_i^*}{k_BT}\right),
+\end{equation*}
+where $X_i^*$ is the value of $X_i$ which maximises the value of the exponential.
+
+The \emph{$p-T$ ensemble} is one specific example of a generalised ensemble. In this case the pressure and temperature are fixed, while the internal energy and volume (their conjugate variables) are allowed to fluctuate.
+Using the generalised formula above, and dropping the subscripts that we were previously using to denote the system, the $p-T$ ensemble is given by
+ \begin{equation*}
+	\langle A\rangle = \frac{1}{Z}\int dxA(x)\exp\left(-\frac{E(x)=pV(x)}{k_BT}\right),
+\end{equation*}
+while the partition function is given by
+$$
+	\ln Z = -\frac{E-TS+pV}{k_BT}.
+$$
+The quantity on the top of the fraction is the \emph{Gibbs free energy}. (See section 3.14 of SMiaN)
+
+Another important ensemble is the so-called \emph{grand ensemble} in which the number of particles in the system is also allowed to fluctuate due to, for example, chemical reactions, while the \emph{chemical potential} $\mu$ is held fixed. In this case the expression for the expected value of an observable is
+$$
+	\langle A \rangle = \frac{1}{Z} \sum_{N=1}^\infty \int dxA(x)\exp\left(-\frac{H_N(x)-\mu N}{k_BT}\right),
+$$
+while the corresponding partition function is given by
+$$
+	\ln Z = -\frac{E-TS-\mu N}{k_BT}.
+$$
+(See section 3.15 of SMiaN and section 4.4 of SMMS for more discussion of the grand canonical ensemble.)
+
+\subsection*{Information theory and the Gibbs Formula for entropy}
+To finish off this section, we'll look at one last application of entropy; not because it is particularly useful to physical systems in statistical mechanics, but because it gives a result that forms the basis of information theory.
+
+We'll return to a considering a generalised ensemble, like the one we looked at a couple of sections earlier. However, in this case we'll assume that the phase space is discretized and that the index $n$ runs over all of the microstates of the system. If we consider an intensive variable $f$ and its corresponding extensive variable $X$ then the expression for the expected value of any observable $A$ is
+$$
+	\langle A \rangle = \frac{1}{Z}\sum_n A_n\exp\left(\frac{fX_n}{k_BT}\right),
+$$
+while the partition function $Z$ is given by
+$$
+	Z =\sum_n\exp\left(\frac{fX_n}{k_BT}\right).
+$$
+
+The partition function is related to the thermodynamic potentials (see the previous section on generalised ensembles and SMiaN sections 3.12 and 3.13) via
+\begin{equation}
+	\ln Z = \frac{TS+f\langle X\rangle}{k_BT}.
+	\label{eq:gibbZ}
+\end{equation}
+
+Now, for any individual microstate n the probability is therefore given by
+$$
+	p_n = \frac{1}{Z}\exp\left(\frac{fX_n}{k_BT}\right).
+$$
+Taking the log of both sides of this expression gives
+$$
+	\ln p_n = \frac{fX_n}{k_BT} - ln Z,
+$$
+which after substituting \ref{eq:gibbZ} for $\ln Z$ gives
+$$
+	\ln p_n = \frac{1}{k_BT}(fX_n -TS -f\langle X\rangle).
+$$
+
+Now we can calculate the expected value of both side of the above equation
+$$
+	\langle \ln p_n \rangle = \sum_n p_n\ln p_n = \frac{1}{k_BT}(f\langle X\rangle -TS -\langle X \rangle) = \frac{-S}{kB}.
+$$
+
+After rearranging this for $S$ (and making explicit the sum for the expected value of $p_n$) we arrive at the \emph{Gibbs formula for entropy}:
+$$
+	S = -k_B\sum_np_n\ln p_n.
+$$
+
+Although this is elegant, it's generally useless in the context of physical systems since the number of microstates it would be necessary to sum over is far to large to be practical and, in any case, we generally don't know the probability distribution $p_n$ for each of the microstates. The value of this expression lies in it's application to other systems, particularly information theory, where it can be used to quantify amount of information in, for example a digital signal, in which case the $p_n$ represent the probability of receiving the $n$-th possible value in the list of signals.
+
+\subsection*{Recommended reading}
+Most of the notes in this section follow closely the second half of chapter 3 in \emph{Statistical Mechanics in a Nutshell}; specifically, section 3.6--3.18. Chapter four of \emph{Statistical Mechanics made Simple} covers the smae material in sections 4.0--4.4. It is gives some intuitive and succinct explanations, but I find it to be of more use \emph{after} you've already looked at SMiaN. Also useful, and with a slightly different presentation (perhaps with more traditional notation), is \emph{Entropy, Order Parameters, and Complexity}. Here the content is spread around a bit over chapters three through six. Much of the useful content, including some relevant to early sections of these notes, is in sections 3.1, 3.5, 6.1, 6.2, 6.3, and 5.3.
 
 
 
