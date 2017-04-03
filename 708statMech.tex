@@ -1006,7 +1006,7 @@ How can we make sure that the wave function $\psi_E$ doesn't change under any of
 
 There are two ways to satisfy this condition. The first is when $\psi$ is symmetric in all its arguments such that $P\psi = \psi$ for all possible permutations. The second way is when $\psi$ is anti-symmetric in its arguments such that
 $$
-	\psi = 
+	P\psi = 
 	\begin{cases}
 		+\psi \text{ if $P$ is an even permutation, or}\\
 		-\psi \text{ if $P$ is an odd permutation.}
@@ -1060,7 +1060,7 @@ $$
 It is worth noting that although the properties we derived here all assumed systems of non-interacting particles, the same basic properties hold for systems of interacting particles where, even though the wave function for the system $\psi({\bf r})$ can not be expressed in terms of single-particles wave functions $u_i(r_m)$, it will nevertheless be either symmetric or anti-symmetric, resulting in either Bose or Fermi statistics.
 
 \subsection*{An example: the quantum harmonic oscillator}
-We are going to consider a quantum harmonic oscillator (QHO) with frequency $\omega$ and energy levels $E_n = (n\frac12)\hbar\omega$.
+We are going to consider a quantum harmonic oscillator (QHO) with frequency $\omega$ and energy levels $E_n = (n+\frac12)\hbar\omega$.
 
 The partition function for the QHO is $Z^\text{QHO} = \sum_n\exp(-\beta E_n)$, where for convenience, I've put $\frac{1}{k_BT} = \beta$. Writing this out in full and exploiting the fact that we have a geometric series $\sum_n x^n = \frac{1}{1-x}$ we get
 \begin{eqnarray*}
@@ -1093,12 +1093,12 @@ With what we have recently covered on non-interacting quantum particles and with
 
 For bosons, all fillings $n_k$ of the energy levels are allowed. Each particle in eigenstate $\psi_k$ contributes energy $\epsilon_k$ and chemical potential $\mu$, so for each particle the partition function is
 $$
-	Z_k^\text{boson} = \sum_{n_k=0}^\infty\exp(-\beta(\epsilon_k-\mu)n_k) = \sum_{n_k=0}^\infty\left(\exp(-\beta(\epsilon_k-\mu))\right)^n_k = \frac{1}{1-\exp(-\beta(\epsilon_k-mu))}.
+	Z_k^\text{boson} = \sum_{n_k=0}^\infty\exp(-\beta(\epsilon_k-\mu)n_k) = \sum_{n_k=0}^\infty\left(\exp(-\beta(\epsilon_k-\mu))\right)^n_k = \frac{1}{1-\exp(-\beta(\epsilon_k-\mu))}.
 $$
 
 The partition function for the ensemble is therefore
 $$
-	Z^\text{boson} = \prod_{k=0} \frac{1}{1-\exp(-\beta(\epsilon_k-mu))}.
+	Z^\text{boson} = \prod_{k=0} \frac{1}{1-\exp(-\beta(\epsilon_k-\mu))}.
 $$
 
 The expected number of particles in each state can be calculated as
