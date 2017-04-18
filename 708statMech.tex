@@ -1,6 +1,7 @@
 \documentclass{article}
 \usepackage[utf8]{inputenc}
 \usepackage{amsmath,amssymb}
+\usepackage{graphicx}
 \usepackage{pgfplots}
 
 \newcommand{\calG}{\mathcal{G}}
@@ -539,7 +540,7 @@ Much of the point of statistical mechanics is to \emph{avoid} dealing with the d
 	\item There are many simulation approaches where clever heuristics allow us to deal with much larger systems than might be expected, while still getting the physics correct. (E.g. Monte Carlo methods --- see Shaun's content.) In some cases physical laws, such as energy-conservation, or preservation of phase space volume can be ``baked in'' to the simulation, such that the simulation automatically preserves the appropriate behaviour.
 \end{itemize}
 
-We're going to look in more detail at this last point --- how we might ensure that we can run a simulation for  that preserves physical laws. The context that we are going to look at is molecular dynamics.
+We're going to look in more detail at this last point --- how we might ensure that we can run a simulation that preserves physical laws. The context that we are going to look at is molecular dynamics.
 
 As you might expect from the previous section, such systems can be described by specifying a Hamiltonian where the kinetic energy component takes the familiar form
 $$ T = \sum_i \frac{{\bf p}_i^2}{2m_i},$$
@@ -548,18 +549,33 @@ where the $p_i$ are the momenta of the molecules and $m_i$ are their masses.
 Interactions between particles are described by $U$, the potential term of the Hamiltonian. About the simplest model would be to treat each particle as a hard sphere, with no interactions between them, except during collisions.
 An interaction term that is only slightly more complicated, but is much more realistic, is given by the Lennard-Jones potential:
 $$
-	U(r_{ij}) = 4\epsilon_{ij}\left(\left(\frac{\sigma_{ij}}{r_{ij}}\right)^{12} - 2\left(\frac{\sigma_{ij}}{r_{ij}}\right)^{6}\right),
+	U({\bf r}) = 4\epsilon_{ij}\left(\left(\frac{\sigma_{ij}}{r_{ij}}\right)^{12} - 2\left(\frac{\sigma_{ij}}{r_{ij}}\right)^{6}\right),
 $$
-where $|r_{ij}| = |r_i-r_j|$ are the inter-atomic separations. It's not hard to see that the potential has an absolute minimum at $r = \sigma$ --- this corresponds to the equilibrium separation between atoms. (Omitting the factor of 2 in the potential means the location of the minimum picks up a factor of $2^{-6}$.)The $\epsilon_{ij}$ terms gives the depth of the potential well --- the strength of the inter-atomic attraction. 
+where $|r_{ij}| = |r_i-r_j|$ are the inter-atomic separations. It's not hard to see that the potential has an absolute minimum at $r = \sigma$ --- this corresponds to the equilibrium separation between atoms. (Omitting the factor of 2 in the potential means the location of the minimum picks up a factor of $2^{-6}$.) The $\epsilon_{ij}$ terms gives the depth of the potential well --- the strength of the inter-atomic attraction. 
 
 As a brief historical aside, the $r^{-6}$ term in the potential can be derived mathematically as the attraction due to induced-dipole -- induced dipole interaction. This was known before Lennard-Jones, whose contribution was to include a term for the repulsion when the inter-atomic distance gets very small (Pauli repulsion due to overlapping wave-functions for electrons that are closer than the preferred bonding distance --- but that is getting into condensed matter physics). The repulsion term is actually exponential, rather than $r^{-12}$, but Lennard-Jones decided that $r^{-12}$ is pretty close to an exponential, and is much easier to calculate. Once you already know $r^{-6}$ you can just square it and save yourself a (relatively) expensive calculation of an exponential.
 
-It is worth noting that the pairwise interactions in the Lennard-Jones potential mean that for $N$ particles we must calculate $N^2$ interaction terms. Clearly, this can make trouble once N gets large. One common approach is to use a \emph{long-range cut-off} and only calculate the interaction terms for atoms that are less than some distance $L$ away, or perhaps, only for those inside a unit cell, with sides of length $L$.
+It is worth noting that the pairwise interactions in the Lennard-Jones potential mean that for $N$ particles we must calculate $N^2$ interaction terms. Clearly, this can cause issues once $N$ gets large. One common approach is to use a \emph{long-range cut-off} and only calculate the interaction terms for atoms that are less than some distance $L$ away, or perhaps, only for those inside a unit cell, with sides of length $L$.
 
-Regardless of the exact nature of the interaction term, we typically end up dealing with a Hamiltonian of the form 
+Regardless of the exact nature of the interaction term, we end up dealing with a Hamiltonian of the form 
 $$
 	H({\bf r},{\bf p}) = T({\bf p}) + U({\bf r}).
 $$
+
+\subsection*{Numerical integration}
+Given the equations of motion (or the Hamiltonian) that describes a system, and some compatible initial conditions ${\bf r}(0)$, we want to find the state of the system at some time $T$ in the future (or the solution along some interval $[0,T]$). We do this by breaking the interval into small enough time steps of size $h$ and discretizing the solution ${\bf r}(t)$ as ${\bf r}_n = {\bf r}(t_n) $ where $t_n = nh$.
+
+The simplest approach to approximating the discrete solution is the \emph{explicit Euler method}. It approximates the solution at ${\bf r}(t_{n+1})\simeq {\bf r}_{n+1}$ with
+$$
+	{\bf r}_{n+1} = {\bf r}_n + h \dot{\bf r}_n.
+$$
+That is, it evaluates the differential equation at the current time step and approximates the solution with a straight line of slope $\dot{\bf r}_n$. 
+
+[You can add a diagram to illustrate this - even a hand drawn example.]
+
+The error in the approximation of the solution by the explicit Euler method grows in proportion to the step size $h$, that is $\|{\bf r}_N-{\bf r}(Nh)\|=\mathcal{O}(h)$. We therefore say that the method is fist order accurate.
+
+While the explicit Euler method is very easy to implement, it has a number of issues (you'll see one of them in the assignment). These include the fact that it becomes unstable (the error in its approximation starts to grow exponentially) when the step size is too large. The \emph{implicit Euler} (like the explicit Euler method, but the derivative is evaluated at the end of the time step i.e.$f(r_{n+1})$) method avoids this issue, but at the cost of needing to iteratively solve an implicit equation $r_{n+1}=r_n+hf(r_{n+1})$. It is still only first order.
 
 Since $M\dot{\bf r} = {\bf p}$ and $M\ddot{\bf r} = \dot{\bf p}$ the equations of motion for the system can be written as
 \begin{equation}
@@ -567,75 +583,715 @@ Since $M\dot{\bf r} = {\bf p}$ and $M\ddot{\bf r} = \dot{\bf p}$ the equations o
 	\label{eq:2vf}
 \end{equation}
 That is, we can turn the set of $2d$ first-order differential equations in ${\bf r}$ and ${\bf p}$ into $d$ second order differential equation in ${\bf r}$.
+In much of what follows, I'm going to omit the mass matrix and write $\ddot{\bf r} = f({\bf r})$. This is purely for convenience. Everything still holds when $M$ takes other values for the masses --- just make sure to include a factor of $M^{-1}$ in the $f({\bf r})$ term.
 
-\subsection*{Numerical integration}
-Given the equations of motion (or the Hamiltonian) that describes a system, and some compatible initial conditions ${\bf r}(0)$, we want to find the state of the system at some time $T$ in the future (or the solution along some interval $[0,T]$). We do this by breaking the interval into small enough time steps of size $h$ and discretizing the solution ${\bf r}(t)$ as ${\bf r}_n = {\bf r}(t_n) $ where $t_n = nh$.
-
-The simplest approach to approximating the discrete solution is the explicit \emph{Euler method}. It approximates the solution at $r(t_{n+1})=r_{n+1}$ with
-$$
-	r_{n+1} = r_n + h \dot{r}_n.
-$$
-That is, it evaluates the differential equation at the current time step and approximates the solution with a straight line of slope $\dot{r}_n$. 
-
-[You can add a diagram to illustrate this - even a hand drawn example.]
-
-The error in the approximation of the solution by the explicit Euler method grows in proportion to the step size $h$, that is $\|r_N-r(Nh)\|=\mathcal{O}(h)$. We therefore say that the method is fist order accurate.
-
-While the explicit Euler method is very easy to implement, it has a number of issues (you'll see one of them in the assignment). These include the fact that it becomes unstable (the error in its approximation starts to grow exponentially) when the step size is too large. The implicit Euler (like the explicit Euler method, but the derivative is evaluated at the end of the time step i.e.$f(r_{n+1})$) method avoids this issue, but at the cost of needing to iteratively solve an implicit equation $r_{n+1}=r_n+hf(r_{n+1})$. It is still only first order.
-
-A better approach to numerical integration is to use the Verlet (AKA St\"{o}rmer, AKA leap-frog) method. This is most easily understood in its two-step formulation (i.e. the method requires information from two previously known time steps ($t_{n-1}$ and $t_n$) in order to compute the approximation at the future time step $t_{n+1}$). The approximation is then given by 
+A better approach to numerical integration is to use the Verlet (AKA St\"{o}rmer, AKA leap-frog) method. This is most easily understood in its \emph{two-step formulation} (i.e. the method requires information from two previously known time steps ($t_{n-1}$ and $t_n$) in order to compute the approximation at the future time step $t_{n+1}$). The approximation is given by 
 \begin{equation}
-	r_{n+1} - 2r_n + r_{n-1} = h^2f(r_n),
+	\frac{{\bf r}_{n+1} - 2{\bf r}_n + {\bf r}_{n-1}}{h^2} = f({\bf r}_n),
 	\label{eq:2lf}
 \end{equation}
-where $f(r)$ is the second order differential equation in equation \ref{eq:2vf}. It's not hard to see (you should verify it yourself) that the LHS of \ref{eq:2lf} is an approximation of the second derivative at the point $r_n$.
-The two-step formulation of the leapfrog method can therefore be seen as determining a parabola that interpolates the points $r_{n-1},~r_{n},$ and $r_{n+1}$ and matches the second derivative at the midpoint.
+where $f({\bf r})$ is the second order differential equation in equation \ref{eq:2vf}. It's not hard to see (you should verify it yourself) that the LHS of \ref{eq:2lf} is an approximation of the second derivative at the point ${\bf r}_n$.
 
-It turns out that, for a number of reasons, it is better to work with the Verlet method in its one-step formulation. This can be derived by introducing the velocity $v=\dot{r}$ and turning equation \ref{eq:2vf} back into a first-order system of twice the dimension
+[add a picture to illustrate this]
+
+The two-step formulation of the leapfrog method can therefore be seen as determining a parabola that interpolates the points ${\bf r}_{n-1},~{\bf r}_{n},$ and ${\bf r}_{n+1}$ and matches the second derivative at the midpoint.
+
+It turns out that, for a number of reasons, it is better to work with the Verlet method in its one-step formulation. This can be derived by introducing the velocity ${\bf v}=\dot{\bf r}$ and turning equation \ref{eq:2vf} back into a first-order system of twice the dimension
 $$
-	\dot{r} = v,\qquad \dot{v} = f(r).
+	\dot{\bf r} = {\bf v},\qquad \dot{\bf v} = f({\bf r}).
 $$
 
 We then introduce discrete approximations of $r$ and $v$ as follows:
 $$
 v_n =\frac{r_{n+1}-r_{n-1}}{2h},\qquad v_{n-\frac12} = \frac{r_n-r_{n-1}}{h}, \qquad r_{n-\frac12} = \frac{r_n + r_{n-1}}{2},
 $$
-where some of the derivatives have been evaluated on a staggered grid. We can then use these to formulate a one-step version of the Verlet method. 
+where some of the values have been calculated on a staggered grid. We can then use these to formulate a one-step version of the Verlet method. 
 \begin{eqnarray*}
-	v_{n+\frac12} &=& v_n+\frac{h}{2}f(r_n),\\
-	r_{n+1} &=& r_n +hv_{n+\frac12},\\
-	v_{n+1} &=& v_{n+\frac12}+\frac{h}{2}f(r_{n+1}).
+	{\bf v}_{n+\frac12} &=& {\bf v}_n+\frac{h}{2}f({\bf r}_n),\\
+	{\bf r}_{n+1} &=& {\bf r}_n +h{\bf v}_{n+\frac12},\\
+	{\bf v}_{n+1} &=& {\bf v}_{n+\frac12}+\frac{h}{2}f({\bf r}_{n+1}).
 \end{eqnarray*}
-There is also a dual formulation of the method that gives the values of $r$ and $v$ on the staggered grid points $t_{n-\frac12},t_{n+\frac12},$ etc.
-(It makes sense to think of the one-step method as a discrete map $\Phi_h$, similar to the flow map $\phi_{f,t}$ that maps from the known solution, to it's approximation one time step forward.)
 
-If the velocity values are not needed at the end of each step, then the last line of one step can be combined with the first line of the next step to avoid one evaluation of $f$ per step by only calculating $v$ on the staggered grid:
+[Add a picture to illustrate this]
+
+There is also a dual formulation of the method that gives the values of ${\bf r}$ and ${\bf v}$ on the staggered grid points $t_{n-\frac12},t_{n+\frac12},$ etc.
+(It makes sense to think of the one-step method as a discrete map $\Phi_h$, similar to the flow map $\varphi_{f,t}$ that maps from the known solution, to its approximation one time step forward.)
+
+If the velocity values are not needed at the end of each step, then the last line of one step can be combined with the first line of the next step to avoid one evaluation of $f$ per step by only calculating ${\bf v}$ on the staggered grid:
 \begin{eqnarray*}
-	v_{n+\frac12} &=& v_{n-\frac12}+hf(r_n),\\
-	r_{n+1} &=& r_n +hv_{n+\frac12}.
+	{\bf v}_{n+\frac12} &=& {\bf v}_{n-\frac12}+hf({\bf r}_n),\\
+	{\bf r}_{n+1} &=& {\bf r}_n +h{\bf v}_{n+\frac12}.
 \end{eqnarray*}
-This is the most computationally efficient of the Verlet method. It is also numerically more stable than the two-step formulation.
+This is the most computationally efficient form of the Verlet method. It is also numerically more stable than the two-step formulation.
 
-It is not too hard to show (you should prove it for yourself) that the Verlet method is symplectic. That is the discrete map that it defines preserves the symplectic form that we saw earlier. This is almost, but not quite the same as preserving the value of the associated Hamiltonian along solutions of the vector field. In fact, it is possible to show (but trickier than proving symplecticity) that the difference between the value of the Hamiltonian evaluated along the discrete approximation from the Verlet method differs only exponentially slowly from the exact value of the Hamiltonian for the true solution. This makes the Verlet method a popular choice for molecular dynamics. In addition to having good stability and being easy to implement, it is automatically almost energy-preserving. The Verlet method is second order accurate, that is the error in the solution $\|x_{nh}-x(nh)\|=\mathcal{O}(h^2)$.
+It is not too hard to show (you should prove it for yourself) that the Verlet method is symplectic. That is, the discrete map that it defines preserves the symplectic form that we saw earlier. This is almost, but not quite the same as preserving the value of the associated Hamiltonian along solutions of the vector field. In fact, it is possible to show (but trickier than proving symplecticity) that the difference between the value of the Hamiltonian evaluated along the discrete approximation from the Verlet method differs only exponentially slowly from the exact value of the Hamiltonian for the true solution. This makes the Verlet method a popular choice for molecular dynamics. In addition to having good stability and being easy to implement, it is automatically almost energy-preserving.
 
-Now that we have a suitable method for calculating the micro-state of a system at some point in the future, we can look for ways to measure macroscopic quantities from the solution. It is worth bearing in mind that for any simulations, the initial conditions use are unlikely to correspond to representative configuration for the system, it is good practise let the simulation run for a period of time (perhaps a few thousand time steps) before attempting to measure any properties. This process is known as equilibration or thermalization.
+The Verlet method is \emph{symmetric} (replacing $h$ with $-h$ and swapping the subscripts $n$ and $n+1$ gives the same method again) and \emph{reversible} (changing the sign on the velocity for the initial condition is the same as running the method in reverse).It is also second order accurate; that is the error in the solution $\|{\bf x}_{Nh}-{\bf x}(Nh)\|=\mathcal{O}(h^2)$.
 
-Using simulated particle trajectories usually means we simplicity invoke an assumption of \emph{ergodicity}. This essentially says that averaging of a solution, for a long enough time period for a system, is equivalent to averaging over a large number of initial conditions for the same system, where the initial conditions correspond to the same macro-sate of the system.
+Now that we have a suitable method for calculating the micro-state of a system at some point in the future, we can look for ways to measure macroscopic quantities from the solution. It is worth bearing in mind that for any simulations, the initial conditions used are unlikely to correspond to a representative configuration for the system. It is therefore good practise to let the simulation run for a period of time (perhaps a few thousand time steps) before attempting to measure any properties. This process is known as equilibration or thermalization.
+
+Using simulated particle trajectories usually means we implicitly invoke an assumption of \emph{ergodicity}. This essentially says that averaging an observable along a solution, for a long enough time period for a system, is equivalent to averaging that observable over a large number of initial conditions for the same system, where the initial conditions correspond to the same macro-state of the system. While the hypothesis of ergodicity is useful, there are many real world cases where it doesn't hold --- for example any system that exhibits \emph{hysteresis} in which properties of the system are path dependent. Magnet systems, in particular, tend to display such properties. For more discussion of this, see section 4.0 of \emph{Statistical Mechanics in a Nutshell}.
 
 We have seen earlier that we identify the temperature of a thermodynamic system with the average square velocities of the particles in the system with some suitable normalisation. The temperature of our simulated system, with $N$ particles is therefore given by
 $$
-	T(p) = \frac{1}{Nk_B}\sum_{i=1}^N\frac{1}{2m_i}\|p_i\|^2.
+	T({\bf p}) = \frac{1}{Nk_B}\sum_{i=1}^N\frac{1}{2m_i}\|p_i\|^2.
 $$
 
-Other easily computable quantities include the virial function (we haven't mentioned this yet, but it is used to relate the total potential energy of a system to the total kinetic energy and can be used to calculate the pressure of a system --- see pp 255--256 of \emph{Statistical Mechanics in a Nutshell}):
+Another easily computable quantity is the virial function (we haven't mentioned this yet, but it is used to relate the total potential energy of a system to the total kinetic energy and can be used to calculate the pressure of a system --- see pp 255--256 of \emph{Statistical Mechanics in a Nutshell}):
 $$
-	C(r) = \sum_{i=2}^N\sum_{j=1}^{i-1}\nabla U(r_{ij})r_{ij},
+	C({\bf r}) = \sum_{i=2}^N\sum_{j=1}^{i-1}\nabla U(r_{ij})r_{ij},
+$$
+Both of these quantities give instantaneous values of the observables. Other quantities can be calculated as time averages of a solution of the system. For example, the constant volume specific heat:
+$$
+	C_v = k_B\left[\frac{2}{3N}-\frac{4}{9}\frac{\langle(T-\langle T\rangle)^2\rangle}{\langle T\rangle^2}\right]^{-1}
 $$
 
-and the constant volume specific heat:
+\subsection*{Recommended reading}
+\begin{itemize}
+	\item Sections 8.1 and 8.2 of \emph{Statistical Mechanics in a Nutshell}
+	\item \emph{Geometric numerical integration illustrated by the St\"{o}rmer–Verlet method}, E. Hairer, Ch. Lubich, and G. Wanner, Acta Numerica (2003)
+	\item Chapter 11 of \emph{Simulating Hamiltonian Dynamics}, B. Leimkuhler and S. Reich, Cambridge Univeristy Press (2004)
+\end{itemize}
+
+\section*{Ensembles}
+
+In the previous section, we considered an isolated system where we could keep track of the dynamics of every particle and use that to calculate the values of extensive, macroscopic properties of the system. An important aspect of this was the conservation of energy for the system. We refer to such systems as a \emph{micro-canonical ensemble} --- the system is isolated with no heat flux and no change in the number of particles, hence the internal energy of the system is constant and it is described entirely by the Hamiltonian dynamics
+
+We also saw (a couple of sections earlier) that we can equate the entropy of a system with the accessible volume of the phase space of that system. This was part of what motivated us to study the microscopic dynamics of the system using molecular dynamics.  We'd now like to consider some slightly more realistic cases where, for example, we may want to allow for multiple systems in contact.
+
+We'll start by considering the simplest case: two (isolated) systems in contact, without any exchange of energy. If the state of system 1 corresponds to the region of phase space $\Gamma^1$ and similarly, the state of system 2 to $\Gamma^2$ then the state of the composite system $1\cup 2$ corresponds to the phase space regions given by the Cartesian product $\Gamma^{1\cup 2}=\Gamma^1\times\Gamma^2$ and the volume of this accessible volume of phase space is given by $|\Gamma^{1\cup 2}|=|\Gamma^1||\Gamma^2|$. From this, it's easy to see that the entropy of the composite system is given by
+\begin{eqnarray*}
+	S &=& k_B\ln|\Gamma^{1\cup 2}| = k_B\ln(|\Gamma^1||\Gamma^2|)\\
+		&=& k_B\ln|\Gamma^1| + k_B\ln|\Gamma^2| = S^1 + S^2,
+\end{eqnarray*}
+which is fortunate, since entropy is an extensive variable and we therefore expect it to be additive.
+In this example the two sub-system were completely isolated from each other; the dynamics of one system had no influence on the dynamics of the other. This condition of dynamic independence corresponds to the independence of the observables that pertain to these sub-systems.
+
+Now, let's look at how the entropy of a composite system changes if we allow for the exchange of energy between the two sub-systems. This has the effect of increasing the accessible volume of the phase space, since exchange of energy means that there are more possible configurations for the overall system.
+
+Without energy exchange, the volume of the accessible phase space to the total system is given by
 $$
-	C_v = k_B\left[\frac{2}{3N}-\frac{4}{9}\frac{\langle(T-\langle T\rangle)^2\rangle}{\langle T\rangle^2}\right]^{-1}.
+	|\Gamma_0| = |\Gamma^1||\Gamma^2|.
 $$
+Once we allow for the exchange of energy, this becomes
+$$
+	|\Gamma| = \sum_{E^1}|\Gamma(E^1)||\Gamma^2(E_\text{tot}-E^1)|.
+$$
+That is, we must now consider all possible configurations where the total energy of the composite system is partitioned between the two sub-systems. This volume is bounded below by $|\Gamma_0|$ since the expression for $|\Gamma_0|$ is just one of the terms in the sum. At first glance, it may look like this increase in the volume of the accessible phase space is enormous (we have added many more possible configurations), however, the volume of the accessible phase space for the composite system corresponds almost entirely to the states where $E^1=E^1_\text{eqm}$ and $E^2=E^2_\text{eqm}$. As a consequence, for large enough $N$, the difference between $\Gamma$ and $|\Gamma^1(E^1_\text{eqm})||\Gamma^2(E^2_\text{eqm})|$ is negligible. It's not too hard to show (see section 3.7 of \emph{Statistical Mechanics in a Nutshell}) that the contribution to the accessible phase space volume due to the exchange of energy between the two systems is of order $\sqrt{N}$ compared with the total system size $N$ --- small enough to be negligible when $N$ is large.
+
+\subsection*{The canonical ensemble}
+
+Rather than considering a perfectly isolated system, for which energy is conserved, a more realistic experimental situation may be to consider a system S in thermal contact with some much larger reservoir R. This has the effect of holding the total system at constant temperature. In such a situation we want to be able to calculate the average value $\langle A\rangle$ of an observable $A$ for the system S; we are not interested in the state of the reservoir R, except to the extent that it helps us determine the state of S.
+
+If, for the composite system S$\cup$R, we write $x_S,x_R$ for the state, te=hen the average value of the observable $A$ is given by
+$$
+	\langle A\rangle = \frac{1}{|\Gamma|}\int_{\Gamma}dx_Sdx_RA(x_s),
+$$
+where $\Gamma$ is the region of the phase space for the composite system, when it has total internal energy of $E$.
+
+In order to make explicit the parts of the total phase space that is accessible to the composite system, wewrite the above expression as the Cartesian product of the phase space for the system and the reservoir, i.e.
+$$
+	\langle A\rangle =\frac{1}{|\Gamma|}\int dx_SA(x_S)\times\int dx_R\delta(H^R(x_R)-(E-H^S(x_S))).
+$$
+The delta function in the last term is zero, except when $x_S$ and $x_R$ in the two sub-systems take values such that $H^S+H^R=E$. That is the delta function defines the accessible phase space volume when the two sub-systems can exchange internal energy between them, but the total internal energy of the composite system is conserved.
+
+Recalling the fundamental postulate of statistical mechanics ($S=k_B\ln|\Gamma|$), we rewrite the last expression to replace the phase space volume with the corresponding expression for entropy:
+$$
+	\int dx_R\delta(H^R(x_R)-(E-H^S(x_S))) \simeq \exp\left(\frac{1}{k_B}S^R(E-H^S)\right).
+$$
+
+Since $H^S$ is much less than $E$ it makes sense to now expand the exponential in a Taylor series about $E$:
+$$
+	\exp\left(\frac{1}{k_B}S^R(E-H^S)\right)\simeq \exp\left(\frac{1}{k_B}S^R(E)\right)\exp\left(\frac{-1}{k_B}\left.\frac{\partial S^R}{\partial E}\right|_E H^S(x_S)\right)\ldots
+$$
+
+Earlier in the course, we identified $\frac{\partial S}{\partial E}$ with $\frac{1}{T}$, and, for a canonical ensemble, $T$ is constant (that's the point of the reservoir) so we write the expected value of the observable as
+$$
+	\langle A\rangle \simeq \frac{1}{\Gamma}\int dx_sA(x_S)\times\exp\left(\frac{1}{k_B}s^R(E)\right)\exp\left(\frac{-H^S(x_S)}{k_BT}\right).
+$$
+
+It remains to make the normalisation precise. When we do this, the factors of $s\exp\left(\frac{1}{k_B}s^R(E)\right)$ cancel from the integral and its normalisation and we get
+\begin{equation}
+	\langle A\rangle = \frac{1}{Z}\int dx_SA(x_S)\exp\left(\frac{-H^S(x_S)}{k_BT}\right),
+	\label{eq:z1}
+\end{equation}
+where $Z$ is the known as the \emph{partition function} and is given by
+\begin{equation}
+	Z = \int dx_S\exp\left(\frac{-H^S(x_S)}{k_BT}\right).
+	\label{eq:z2}
+\end{equation}
+
+One way to think about equations \ref{eq:z1} and \ref{eq:z2} is that we no longer need to keep track of which parts of phase space are accessible. Instead we can integrate over the entire phase space and each region is weighted appropriately, according to $\exp\frac{-H}{k_BT}$ --- the so-called \emph{Boltzmann factor}, a probability density in the phase space.
+
+Similar to the case of the micro-canonical ensemble, for the canonical ensemble, the contributions to $A$ are dominated by the part of phase space that corresponds to when the system's internal energy is at the equilibrium value. 
+
+You should read through, and understand, section 3.12 of \emph{Statistical Mechanics in a Nutshell} and sections 4.1--4.3 of \emph{Statistical Mechanics Made Simple} for some extra details and explanation.
+
+\subsection*{Other ensembles}
+We can follow a similar approach to what we did for the canonical ensemble and generalise to other types of ensembles. If $f_i$ is some variable that we want to hold fixed and $X_i$ is the conjugate extensive variable, then putting the system in contact with a reservoir with which it can exchange $X_i$ gives
+\begin{equation*}
+	\langle A\rangle = \frac{1}{Z}\int dx_SA(x_S)\exp\left(\frac{f_iX^S_i(x_S)}{k_BT}\right),
+\end{equation*}
+where we have used the relation $\left.\frac{\partial S^R}{\partial X_i^R}\right|_E=-\frac{f_i}{T}$.
+
+Calculating the partition function proceeds similarly too, (see SMiaN, section 3.13) and gives
+\begin{equation*}
+	Z \simeq \exp\left(\frac{T^S(X_i^*)+f_iX_i^*}{k_BT}\right),
+\end{equation*}
+where $X_i^*$ is the value of $X_i$ which maximises the value of the exponential.
+
+The \emph{$p-T$ ensemble} is one specific example of a generalised ensemble. In this case the pressure and temperature are fixed, while the internal energy and volume (their conjugate variables) are allowed to fluctuate.
+Using the generalised formula above, and dropping the subscripts that we were previously using to denote the system, the $p-T$ ensemble is given by
+ \begin{equation*}
+	\langle A\rangle = \frac{1}{Z}\int dxA(x)\exp\left(-\frac{E(x)=pV(x)}{k_BT}\right),
+\end{equation*}
+while the partition function is given by
+$$
+	\ln Z = -\frac{E-TS+pV}{k_BT}.
+$$
+The quantity on the top of the fraction is the \emph{Gibbs free energy}. (See section 3.14 of SMiaN).
+
+Another important ensemble is the so-called \emph{grand ensemble} in which the number of particles in the system is also allowed to fluctuate due to, for example, chemical reactions, while the \emph{chemical potential} $\mu$ is held fixed. In this case the expression for the expected value of an observable is
+$$
+	\langle A \rangle = \frac{1}{Z} \sum_{N=1}^\infty \int dxA(x)\exp\left(-\frac{H_N(x)-\mu N}{k_BT}\right),
+$$
+while the corresponding partition function is given by
+$$
+	\ln Z = -\frac{E-TS-\mu N}{k_BT}.
+$$
+(See section 3.15 of SMiaN and section 4.4 of SMMS for more discussion of the grand canonical ensemble.)
+
+\subsection*{Information theory and the Gibbs Formula for entropy}
+To finish off this section, we'll look at one last application of entropy; not because it is particularly useful to physical systems in statistical mechanics, but because it gives a result that forms the basis of information theory.
+
+We'll return to a considering a generalised ensemble, like the one we looked at a couple of sections earlier. However, in this case we'll assume that the phase space is discretized and that the index $n$ runs over all of the microstates of the system. If we consider an intensive variable $f$ and its corresponding extensive variable $X$ then the expression for the expected value of any observable $A$ is
+$$
+	\langle A \rangle = \frac{1}{Z}\sum_n A_n\exp\left(\frac{fX_n}{k_BT}\right),
+$$
+while the partition function $Z$ is given by
+$$
+	Z =\sum_n\exp\left(\frac{fX_n}{k_BT}\right).
+$$
+
+The partition function is related to the thermodynamic potentials (see the previous section on generalised ensembles and SMiaN sections 3.12 and 3.13) via
+\begin{equation}
+	\ln Z = \frac{TS+f\langle X\rangle}{k_BT}.
+	\label{eq:gibbZ}
+\end{equation}
+
+Now, for any individual microstate n the probability is therefore given by
+$$
+	p_n = \frac{1}{Z}\exp\left(\frac{fX_n}{k_BT}\right).
+$$
+Taking the log of both sides of this expression gives
+$$
+	\ln p_n = \frac{fX_n}{k_BT} - ln Z,
+$$
+which after substituting \ref{eq:gibbZ} for $\ln Z$ gives
+$$
+	\ln p_n = \frac{1}{k_BT}(fX_n -TS -f\langle X\rangle).
+$$
+
+Now we can calculate the expected value of both side of the above equation
+$$
+	\langle \ln p_n \rangle = \sum_n p_n\ln p_n = \frac{1}{k_BT}(f\langle X\rangle -TS -\langle X \rangle) = \frac{-S}{kB}.
+$$
+
+After rearranging this for $S$ (and making explicit the sum for the expected value of $p_n$) we arrive at the \emph{Gibbs formula for entropy}:
+$$
+	S = -k_B\sum_np_n\ln p_n.
+$$
+
+Although this is elegant, it's generally useless in the context of physical systems since the number of microstates it would be necessary to sum over is far to large to be practical and, in any case, we generally don't know the probability distribution $p_n$ for each of the microstates. The value of this expression lies in it's application to other systems, particularly information theory, where it can be used to quantify amount of information in, for example a digital signal, in which case the $p_n$ represent the probability of receiving the $n$-th possible value in the list of signals.
+
+\subsection*{Recommended reading}
+Most of the notes in this section follow closely the second half of chapter 3 in \emph{Statistical Mechanics in a Nutshell}; specifically, section 3.6--3.18. Chapter four of \emph{Statistical Mechanics made Simple} covers the same material in sections 4.0--4.4. It is gives some intuitive and succinct explanations, but I find it to be of more use \emph{after} you've already looked at SMiaN. Also useful, and with a slightly different presentation (perhaps with more traditional notation), is \emph{Entropy, Order Parameters, and Complexity}. Here the content is spread around a bit over chapters three through six. Much of the useful content, including some relevant to early sections of these notes, is in sections 3.1, 3.5, 6.1, 6.2, 6.3, and 5.3.
+
+\section*{Quantum statistical mechanics}
+
+\newcommand{\bra}[1]{\langle #1 |}
+\newcommand{\ket}[1]{| #1 \rangle}
+\newcommand{\braket}[2]{\langle #1 | #2\rangle}
+
+In this section we want to extend the classical statistical mechanics concepts that we have seen so far to quantum mechanical systems. When we do so, we will find that two particular properties of quantum systems --- the (anti-)symmetry of the wave function for fermions (resp. bosons), and the indistinguishability of particles --- have consequences for the statistics of the ensembles that they are part of.
+
+In quantum mechanics we already have two layers of uncertainty about the state of a system: the Heisenberg uncertain principle $\Delta{p}\Delta {r}>{\hbar}/{2}$ means that rather than having a discrete point in phase space to describe the state of a system, the most precision we can hope for is some small region in phase space, centered on that point. Quantum mechanics also deals with probability distributions itself: the wave function $\psi_n({\bf r})$ (or rather $|\psi_n|^2$) describes the probability distribution of a particle being in a particular quantum state.
+
+Statistical mechanics adds an extra layer of probability to this situation in order to deal with ensembles that have probabilities $p_n$ of being in a variety of quantum states $\psi_n$. These quantum ensembles are called \emph{mixed states}. They are distinct from the superposition of quantum states. The superposition of two wave functions implies that the system is in a state comprised of both wave functions simultaneously, while the mixed state says that the system could be in one state or the other, or perhaps both. For example: if $\ket{H}$
+is the wave function for a horizontally polarized photon and $\ket{V}$ is the wave function for a vertically polarised photon, then the superposition $\frac{1}{\sqrt{2}}(\ket{H}+\ket{V})$ is a diagonally polarised photon, while the mixed state is an unpolarised photon that is half $\ket{H}$ and half $\ket{V}$ that could be in either state:  i.e. $\frac12\left(\ket{H}\bra{H}+\ket{V}\bra{V}\right)$.
+
+Given a quantum system in a particular state, represented by the wave function $\psi_n$, the quantum expectation of an operator $\hat{A}$ is given by
+$$
+	\langle\hat{A}\rangle_\text{QM} = \int\psi^*_n\hat{A}\psi_n.
+$$
+(I'll try to always use hats to denote quantum operators, but I'll probably forget them from time-to-time.)
+
+This is sometimes also denoted as $\langle\hat{A}\rangle_\text{pure}$ as it applies to a purely quantum state, where no possibilities of different statistical mechanical configurations exist.
+
+The statistical mechanical expectation operator for an ensemble is given by
+$$
+		\langle\hat{A}\rangle = \sum_n p_n\int\psi_n^*\hat{A}\psi_n.
+$$
+Quantum statistical mechanics is concerned with figuring out how the properties of $\psi_n$ affect the expected value of $\hat{A}$.
+
+\subsection*{A refresher: bra-ket notation}
+The bra-ket notation, popularised by Dirac, gives us an extremely convenient and compact way of dealing with elements of a vector space (in QM, a Hilbert space) in various combinations. It doesn't introduce any new physics but it does let us, for example, use the same notation for an inner product of two quantities, whether they are finite-dimensional vectors or infinite dimensional functions.
+
+$\ket{v}$ by itself (pronounced ket $v$) is just the column vector (or function) $v$.
+
+$\bra{u}$ by itself (pronounced bra $u$) is interpreted as the conjugate transpose of $\ket{u}$, i.e. $\bra{u}=\ket{u}^*$.
+
+The notation becomes particularly convenient when we want to calculate inner products
+$$
+	\braket{u}{v} = u^*v
+$$
+for finite dimension vectors or 
+$$
+	\braket{u}{v} =	\int d{\bf r}u^*({\bf r})v({\bf r})
+$$
+for functions.
+
+Similarly, the outer product can be denoted 
+
+$$
+\ket{u}\bra{v}=uv^* =
+\begin{bmatrix}
+    u_1v^*_1 & u_1v^*_2  & \dots \\
+    u_2v^*_1 & u_2v^*_2  & \dots   \\
+    \vdots & \vdots & \ddots 
+\end{bmatrix}.
+$$
+
+For an operator $\hat{A}$ acting on a ket $\ket{v}$ we have $\hat{A}\ket{v} = \ket{\hat{A}v}$ and hence 
+$$
+	\bra{u}\hat{A}\ket{v}=\braket{u}{\hat{A}v} = u^*\hat{A}v
+$$
+Or, equivalently,  
+$$
+	\braket{u}{\hat{A}v} = \int d{\bf r} u^*({\bf r}) \hat{A} v({\bf r}).
+$$
+
+Bra-ket notation has a number of convenient properties; one that we will make use of shortly is that closed bra-ket sets commute with each other. This is easy to see by considering the vector case where a closed bra-ket pair is just a scalar.
+
+\subsection*{The density matrix/density operator}
+Similar to the way that the single particle density is a convenient way of introducing a probability density into classical statistical mechanics, the density matrix $\rho = \sum_n p_n\ket{\psi_n}\bra{\psi_n}$ (or the density operator $\hat{rho}$ in the case of functions) allows us to consider a probability distribution over an ensemble of quantum states.
+
+To see how the density matrix arises, we will begin with the expression we had earlier for the ensemble expectation of an observable corresponding to some operator $\hat{A}$, which we can now write in bra-ket notation.
+\begin{equation}
+	\langle\hat{A}\rangle = \sum_n p_n\bra{\psi_n}\hat{A}\ket{\psi_n}.
+	\label{eq:7.2}
+\end{equation}
+(We are going to assume throughout this section that all the vectors/wave functions that we deal with have already been normalised.) Now, if $\phi_a$ is any orthonormal basis then the identity operator is
+$$
+	Id = \sum_a\ket{\phi_a}\bra{\phi_a}.
+$$
+If we insert this into equation (\ref{eq:7.2}) for the expected value of $\hat{A}$ we get
+\begin{eqnarray*}
+	\langle\hat{A}\rangle &=& \sum_n p_n\bra{\psi_n} \left(\sum_a\ket{\phi_a}\bra{\phi_a}\right) |\hat{A}\ket{\psi_n}\\
+	&=& \sum_n p_n\sum_a\bra{\phi_a}\hat{A}\ket{\psi_n}\braket{\psi_n}{\phi_a}\\
+	&=& \sum_a \bra{\phi_a}\hat{A} \left(\sum_n p_n \ket{\psi_n}\bra{\psi_n}\right)\ket{\phi_a}\\
+	&=& \sum_a \bra{\phi_a}\hat{A}\rho\ket{\phi_a}\\
+	&=& \text{Tr}(\hat{A}\rho)
+\end{eqnarray*}
+where $\text{Tr}(M)$ denotes the trace of $M$ (in the case of a matrix, this is the sum over the diagonal elements).
+Normalisation means that we have $\text{Tr}(\rho)=1$ and $\sum_n p_n=1$.
+
+We can now use the density matrix to give some expressions for the quantum [micro-$|$grand-]canonical ensembles.
+
+\subsection*{Quantum micro-canonical ensemble}
+We will consider a system with fixed $N$ and $V$. Because we are dealing with a quantum system, rather than fixing the total energy of the system we fix the interval $(E,E+\epsilon)$ where $\epsilon$ is some (small) uncertainty. We will denote by $E_j$ the (discrete) energy eigenstates that correspond to the Hamiltonian operator $\hat{H}$.
+
+The system has distinct accessible micro-states that correspond to the macro-state $(N,V,E;\epsilon)$. The number of distinct accessible states is given by counting over the phase space to get $\Gamma(N,V,E;\epsilon)$. We are going to assume that the probability of the system being in any of the energy states in the interval is equal --- this is the so-called \emph{equal a priori postulate}.
+
+The probability of the system being in a particular micro-state $E_j$ is therefore
+$$
+	p(E_j) =
+	\begin{cases}
+		\frac{1}{\Gamma} \text{ if } E<E_j<E+\epsilon\\
+		0 \text{ otherwise}
+	\end{cases}
+$$
+and, if we choose a basis such that the Hamiltonian operator $\hat{H}$ is diagonal, then the density matrix is the diagonal matrix
+$$
+	\rho = \sum_j p(E_j) \ket{E_j}\bra{E_j}.
+$$
+
+The entropy is given by
+$$
+	S(E) = k_B\ln\Gamma(E).
+$$
+At this point, it's worth noting that when we count the states that comprise $\Gamma$ we must do so in a quantum fashion, i.e. taking account of the indistinguishability of the quantum particles.
+
+We can also write this in a form similar to that for the Gibbs entropy that we saw in an earlier section:
+$$
+	S(E) = -k_b\sum_jp(E_j)\ln(p(E_j))=-k_B\text{Tr}(\rho\ln\rho).
+$$ 
+
+\subsection*{Quantum canonical ensemble}
+Here we take:
+$$
+	p(E_j) = \frac{1}{Z}\exp\left(\frac{-1}{k_BT}E_j\right)
+$$
+and
+$$
+	Z = \sum_j \exp\left(\frac{-1}{k_BT}E_j\right).
+$$
+
+Agin, if we assume, that we have picked a basis where $\hat{A}$ is diagonal and has energy eigenstates $E_j$ (i.e. $\hat{H}\ket{E_j} = E_j\ket{E_j}$) then, we can write
+$$
+	\rho = \frac{1}{Z}\exp\left(\frac{-1}{k_BT}\hat{H}\right)
+$$
+where
+$$
+	Z = \text{Tr}\left[\exp\left(\frac{-1}{k_BT}\hat{H}\right)\right].
+$$
+
+\subsection*{Quantum grand-canonical ensemble}
+The density matrix is given by
+$$
+	\rho = \frac{1}{Z}\exp\left(\frac{-1}{k_BT}(\mu\hat{N}-\hat{H})\right)
+$$
+with the corresponding partition function
+$$
+	Z = \text{Tr}\left[\exp\left(\frac{-1}{k_BT}(\mu\hat{N}-\hat{H})\right)\right].
+$$
+
+\subsection*{Systems of indistinguishable particles}
+This is where we will see one of the more interesting consequences of quantum mechanics on statistical mechanics - namely how the symmetry of the wave function for the particles in our system affect the statistics of the system.
+
+We will consider a system of $N$ identical non-interacting particles --- an ideal quantum gas. Since the particles are non-interacting, the overall Hamiltonian $\hat{H}$ for the system is just the sum of the Hamiltonians for each of the individual particles:
+$$
+	\hat{H}({\bf r},{\bf p}) = \sum_i^N\hat{H_i},
+$$
+where $\hat{H}_i$ is the Hamiltonian of the $i$-th particle.
+
+The time-independent Schr\"odinger equation for the system is
+$$
+	\hat{H}\ket{\psi_E} = E\ket{\psi_E}
+$$
+where $E$ is an energy eigenvalue of $\hat{H}$ and $\psi_E$ is the corresponding eigenfunction.
+
+We can use the fact that $\hat{H}$ is a sum of non-interacting terms to write the solution $\psi_E$ as a product of the solutions to each of the individual particles: 
+$$
+	\psi_E = \prod_{i=1}^Nu_{\epsilon_i}
+$$
+where $\sum_{i=1}^N\epsilon_i = E$ and where $u_{\epsilon_i}$ is the eigenfunction of $\hat{H_i}$, i.e. $\hat{H_i}u_{\epsilon_i}={\epsilon_i}u_{\epsilon_i}$.
+
+Since the stationary state of the overall system can be described in terms of the constituent particles, we just need to specify how many particles are in each energy state. We write $n_i$ for the number of particles in the state with energy $\epsilon_i$ and $\{n_i\}$ for the set of all such $n_i$. We therefore have
+$$
+	\sum_i n_i =N \qquad \text{and} \qquad \sum_in_i\epsilon_i = E.
+$$
+
+The wave function for the overall state can now be written in terms of the particles in each of the distinct energy eigenstates
+\begin{equation}
+	\psi_E = \prod_{m=1}^{n_1}u_1(m)\prod_{m=n_1+1}^{n_1+n_2}u_2(m)\cdots
+	\label{eq:compfn}
+\end{equation}
+where $u_i(m)$ is the single particle wave function $u_{\epsilon_1}({\bf r}_m)$.
+That is, $\psi_E$ is the product of individual particle eigenfunction, each with degeneracy that corresponds to the number of particles in each energy state.
+We will refer to this as the Boltzmann wave function, which we will denote $\psi_\text{Boltz}$.
+
+Since the particles are identical, it is possible to permute their coordinates in (\ref{eq:compfn}) while keeping the system in the same state. I.e. the sequence of indices $(1,2,3,\ldots,N)$ are permuted to $(P1,P2,P3,\ldots,PN)$ where $P$ denotes mapping an index $m$ to the permuted index $Pm$. The resulting wave function will then be
+\begin{equation}
+	P\psi_E = \prod_{m=1}^{n_1}u_1(Pm)\prod_{m=n_1+1}^{n_1+n_2}u_2(Pm)\cdots.
+	\label{eq:permfn}
+\end{equation}
+
+
+In classical statistical mechanics, though the particles may be identical, we treat them as being distinguishable. That is permutation of two identical particles corresponds to two different, though identical, micro-states of the system with the same energy. (This is what leads to the necessity of introducing the Gibbs factor in classical statistical mechanics when evaluating the free energy of the canonical ensemble. We didn't go over this in lectures but you have all read sections 4.0--4.4 of \emph{Statistical Mechanics made Simple} by now, right?) The Gibbs factor $\frac{1}{n_1!n_2!\cdots}$ allows us to correct for the fact that the particles being permuted are \emph{effectively} indistinguishable and the permutation doesn't really correspond to a different micro-state of the system.
+
+In quantum mechanics, the particles are, \emph{in reality} indistinguishable. I.e. all that matters is the number of particles in each state --- the micro-states that occur from permutation are the same micro-state.
+Interchanging particle coordinates (i.e. the arguments of $u_i$) in the wave function (\ref{eq:compfn}) should, therefore, not lead to a new micro-state.
+
+How can we make sure that the wave function $\psi_E$ doesn't change under any of the above permutations? One way is to make $\psi_E$ be a linear combination of all the $N!$ possible wave functions that can be formed from such permutations such that the probability density for the quantum system stays the same: $|P\psi|^2=|\psi|^2$.
+
+There are two ways to satisfy this condition. The first is when $\psi$ is symmetric in all its arguments such that $P\psi = \psi$ for all possible permutations. The second way is when $\psi$ is anti-symmetric in its arguments such that
+$$
+	P\psi = 
+	\begin{cases}
+		+\psi \text{ if $P$ is an even permutation, or}\\
+		-\psi \text{ if $P$ is an odd permutation.}
+	\end{cases}
+$$
+
+We will denote these solutions as $\psi_S$ and $\psi_A$ respectively. They can be written in terms of the Boltzmann wave function (\ref{eq:compfn}) as
+$$
+	\psi_S=c\sum_P P\psi_\text{Boltz}
+$$
+and
+$$
+	\psi_A=c\sum_P \delta_P(P)\psi_\text{Boltz}
+$$
+where $c$ is a normalisation constant and $\delta_P(P)$ is $+1$ or $-1$ depending on whether $P$ is an even or odd permutation, respectively.
+
+The wave function $\psi_A$ can be written as the \emph{Slater determinant} 
+$$
+	\Psi_A = c\det\begin{bmatrix}
+		u_i(1) & u_i(2) & u_i(3) & \dots & u_i(N)\\
+		u_j(1) & u_j(2) & u_j(3) & \dots & u_j(N)\\
+		u_k(1) & u_k(2) & u_k(3) & \dots & u_k(N)\\
+		\vdots & \vdots & \vdots & \ddots & \vdots \\
+		u_z(1) & u_z(2) & u_z(3) & \dots & u_z(N)
+	\end{bmatrix}
+$$
+
+When calculating the terms in the expansion of the determinant, the leading diagonal is the Boltzmann wave function (\ref{eq:compfn}) while the other terms are permutations of it. The signs for the permuted terms appear automatically in the right order as the determinant is calculated.
+
+Exchanging a pair of arguments in the wave function is the same as swapping a pair of columns of the matrix and causes the sign of the contribution to the determinate to change.
+
+If two or more particles are put into the same energy state, then the matrix has two or more identical rows and the determinant becomes zero --- the wave function vanishes. This implies that an anti-symmetric wave function corresponds to a quantum system where no two particles can be in the same state, i.e. the Pauli exclusion principle that applies to fermions. The statistics governing such systems are called \emph{Fermi-Dirac statistics}.
+
+For Fermi-Dirac statistics the weight factor $W_{F.D.}\{n_i\}$ for the state of the system is given by
+$$
+	W_{F.D.}\{n_i\} = 
+	\begin{cases}
+		1 \text{ if } \sum_i n_1^2 = N\\
+		0 \text{ if } \sum_i n_i^2 > N
+	\end{cases}
+$$
+
+
+For symmetric wave functions, there is no such restriction on the number of particles per state $n_i$ and the resulting statistics are called \emph{Bose-Einstein statistics}.
+
+Here the weight factor is
+$$
+	W_{B.E.}\{n_i\} = 1,\qquad i=0,1,2,\ldots.
+$$
+
+It is worth noting that although the properties we derived here all assumed systems of non-interacting particles, the same basic properties hold for systems of interacting particles where, even though the wave function for the system $\psi({\bf r})$ can not be expressed in terms of single-particles wave functions $u_i(r_m)$, it will nevertheless be either symmetric or anti-symmetric, resulting in either Bose or Fermi statistics.
+
+\subsection*{An example: the quantum harmonic oscillator}
+We are going to consider a quantum harmonic oscillator (QHO) with frequency $\omega$ and energy levels $E_n = (n+\frac12)\hbar\omega$.
+
+The partition function for the QHO is $Z^\text{QHO} = \sum_n\exp(-\beta E_n)$, where for convenience, I've put $\frac{1}{k_BT} = \beta$. Writing this out in full and exploiting the fact that we have a geometric series $\sum_n x^n = \frac{1}{1-x}$ we get
+\begin{eqnarray*}
+	Z^\text{QHO} &=& \sum_{n=0}^\infty \exp(-\beta\hbar\omega(n+\frac12))\\
+	&=& \exp(-\beta\hbar\omega/2)\sum_{n=0}^\infty(\exp(-\beta\hbar\omega))^n \\
+	&=& \exp(-\beta\hbar\omega/2)\frac{1}{1-\exp(-\beta\hbar\omega)}.
+\end{eqnarray*}
+
+To find the average internal energy, think back to when we first introduced the partition function to normalize the probability of a particle being in a state with a particular energy $E_n$.
+
+We have
+$$
+	\langle E\rangle = \sum_n E_n P_n = \frac{\sum_n E_n \exp(-\beta E_n)}{Z} = \frac{-\partial Z}{\partial \beta}\frac{1}{Z} = -\frac{\partial}{\partial \beta}\ln{Z},
+$$
+
+So,
+\begin{eqnarray*}
+	\langle E\rangle^\text{QHO} &=& -\frac{\partial}{\partial}\ln(Z^\text{QHO})\\
+	&=&  -\frac{\partial}{\partial\beta} \left[\ln\left( \exp(-\beta\hbar\omega/2)\frac{1}{1-\exp(-\beta\hbar\omega)}\right) \right] \\
+	&=& \frac{\partial}{\partial \beta} \left[ \beta\hbar\omega/2 - \ln\left(\frac{1}{1-\exp(-\beta\hbar\omega)}\right)\right]\\
+	&=& \frac{\partial}{\partial \beta} \left[ \beta\hbar\omega/2 + \ln\left({1-\exp(-\beta\hbar\omega)}\right)\right]\\
+	&=& \hbar\omega/2 + \frac{\hbar\omega\exp(-\beta\hbar\omega)}{1-\exp(-\beta\hbar\omega)}\\
+	&=& \hbar\omega\left(\frac12 +\frac{1}{\exp(\beta\hbar\omega)-1}\right)
+\end{eqnarray*}
+
+and expected value for the excitation level is $\langle n\rangle^\text{QHO} = 1/(\exp(\beta\hbar\omega)-1)$.
+
+\subsection*{Fermionic and bosonic partition functions}
+With what we have recently covered on non-interacting quantum particles and with the above worked example for finding the expectation value for an observable of a quantum system, we will jump straight to the fermionic and bosonic grand canonical partition functions.
+
+For bosons, all fillings $n_k$ of the energy levels are allowed. Each particle in eigenstate $\psi_k$ contributes energy $\epsilon_k$ and chemical potential $\mu$, so for each particle the partition function is
+$$
+	Z_k^\text{boson} = \sum_{n_k=0}^\infty\exp(-\beta(\epsilon_k-\mu)n_k) = \sum_{n_k=0}^\infty\left(\exp(-\beta(\epsilon_k-\mu))\right)^n_k = \frac{1}{1-\exp(-\beta(\epsilon_k-\mu))}.
+$$
+
+The partition function for the ensemble is therefore
+$$
+	Z^\text{boson} = \prod_{k=0} \frac{1}{1-\exp(-\beta(\epsilon_k-\mu))}.
+$$
+
+The expected number of particles in each state can be calculated as
+$$
+	\langle n_k \rangle^\text{boson} = -\frac{\partial}{\partial \mu}(-\beta\ln(Z)) = \frac{1}{\exp(\beta(\epsilon_k-\mu))-1}.
+$$
+
+
+For fermions where $n_k=0$ or $n_k=1$ the single particle partition function is
+$$
+	Z_k^\text{fermion} = \sum_{n_k=0}^1 \exp(-\beta(\epsilon_k-\mu)n_k) = 1 + \exp(-\beta(\epsilon_k-\mu)),
+$$
+and the partition particle for an ensemble is
+$$
+	Z^\text{fermion} = \prod_k(1+ \exp(-\beta(\epsilon_k-\mu))).
+$$
+The expected number of fermions per state is therefore
+$$
+		\langle n_k \rangle^\text{fermion} = \frac{1}{\exp(\beta(\epsilon_k-\mu))+1}
+$$
+\subsection*{Recommended reading}
+Although I've made lots of use of \emph{Statistical Mechanics in a Nutshell} in other sections of the course, I feel like it does particularly poorly with quantum systems. \emph{Statistical Mechanics made Simple} does better, but it doesn't give much of an overview of the fundamentals. So, for this section I've made use of \emph{Statistical Mechnaics} by R.K. Pathria, particularly the fundamentals in chapter five. Chapters six through eight give more details on ideal quantum systems and Fermi and Bose systems --- have a look at them too. The other useful text is \emph{Entropy, Order Parameters and Complexity} by J.P. Sethna, specifically chapter seven.  You should read sections 7.6 and 7.7 for some simple examples on bosonic and fermionic systems. Finally, chapters five and six of SMmS covers bosonic and fermionic systems well once you've got the fundamentals sorted.
+
+
+\section*{Complex networks}
+
+Graph theory is a well established area of mathematics. More recently, other areas from physics to economics, sociology to ecology have found that the structures and properties of graphs give a powerful and practical method of representing systems of interest to them. This new focus on what might have been called applied graph theory is what is now mostly know as network science. One of the interesting aspects of network science is that it deals with structures that are non-regular (not lattice-like) but also not purely random. These heterogeneous patterns of connections have implications for the study of complex systems (systems of entities with non-trivial sets of typically non-linear interactions) and hence networks often get referred to as complex networks. The Complex part of the name is really a bit redundant, but it sounds good and is commonly used, so we'll stick with it.
+
+\subsection*{An introduction to graph theory \& networks}
+
+A network or \emph{graph} is a collection of \emph{vertices} (nodes) $V=\{v_i\}$ and \emph{edges} (links) $E=\{e_{ij}\}$ which we denote $G= G(V,E)$.
+
+If we consider the edge $e_{ij}$, between vertices $v_i$ and $v_j$ to be distinct from $e_{ji}$ then we say that the edge is \emph{directed}. A graph is directed if all its edges are directed. A \emph{simple graph} is a network (possibly directed) where there is a unique (directed) edge between connected pairs of nodes. A \emph{multigraph} allows for the possibility of multiple edges edges between the same nodes. We will mostly only consider simple graphs, though much of what we'll present also holds for multigraphs, with a slight adjustment. 
+
+The \emph{density} of a graph is the number of edges present in the graph divided by the number of possible edges. For an undirected simple graph with $|V|=n$ nodes, the density is given by
+$$
+	\rho = \frac{|E|}{\frac12 n(n-1)},
+$$
+where $|E|$ is the number of edges and where the factor of $\frac12$ comes from the fact that the edges are undirected so $e_{ij}=e_{ji}$. 
+
+The \emph{degree} of a node in a network, often denoted $k$ or $k_i$ for the degree of node $i$ is the number of edges that connect to that node. In the case of a directed network we have both \emph{in-degree} and \emph{out-degree}, the number of incoming and outgoing links, respectively.
+
+The \emph{component} of a graph to which a vertex belongs is the set of vertices that can be reached from it by paths running along the edges of the graph. A node in a directed graph has both an \emph{in-component} and an \emph{out-component} corresponding to the nodes that it can be reached from and the nodes that can be reached from it. A graph need not consist of only a single component, though some properties are ambiguously defined when it does not.
+
+The \emph{geodesic path} between a pair of nodes is the shortest path through the network that connects them. The shortest path need not be unique and for a directed network the shortest path can differ depending on direction.
+
+The notation $e_{ij}$ for the edges of a network suggest that we can represent a network as a matrix. If we let the rows and columns of the matrix represent the vertices of the network, then the non-zero entries of the matrix represent edges between pairs of vertices. We call such a network the \emph{adjacency matrix} of the graph. The values of the non-zero entries can be used to denote \emph{edge weights} of a \emph{weighted graph}.
+
+Many real-world networks consist of nodes of different types, with connection only between nodes of certain types. The simplest example of this is a \emph{bipartite network}: a network of two types of vertices $V=\{v_i\}$ and $U=\{u_j\}$ where the edges only connect nodes of type $v$ to nodes of type $u$. For example, a publication network where $V$ represents authors and $U$ their publications. Edges link authors to their publications but not publications to publications, nor authors to authors. In order to obtain a co-authorship network from this publication network it would be necessary to calculate the \emph{unipartite} or \emph{one-mode projection} of the bipartite network.
+
+
+\subsection*{Real-world networks: some examples}
+
+{\bf Social networks:} 
+
+A social network is a set of people or groups with some pattern of contacts or interactions between them. They include such diverse examples as friendship networks of dolphins and interactions between characters in works of fiction, through to more traditional networks such as friendships between individuals, either in real life, or on Facebook, employment networks, and business relationships between companies.
+
+Some of these networks, like the business relationships are best viewed as undirected networks, while others, like real-life friendship networks are directed. Friendship networks lend their name to an interesting feature of networks: the so called \emph{friendship paradox} which states that your friends will typically have more friends than you do. This arises from the fact that like many other real-world networks, friendship networks have a heavy-tailed degree distribution so picking a random node and following an edge from it is likely to lead you to a node with higher degree than the starting node.
+
+\emph{Contact networks} are one important example of social networks. These are networks of when people are in close enough proximity to allow for a disease to spread between them. (Close enough obviously depends on the type of disease.) Contact networks play an important role in modeling of disease contagion --- for example the recent Ebola outbreak in West Africa was successfully modeled using contact networks and this played an important role in managing the epidemic.
+
+
+
+{\bf Information networks:}
+
+These could equally be called knowledge networks. Examples include the publication networks mentioned earlier (bipartite, undirected), citation networks (directed) whether as citations of publications or of patents, and the World Wide Web (directed). (Note --- the WWW should not be confused with the internet; one is a collection of electronic documents that can link to one another, the other is a collection of computers and switches connected by cables.) Preference networks are another example of information networks that are often used in real-world applications. Examples include networks of people linked to their Netflix viewings, or their Amazon purchases. Identifying patterns in such networks and predicting likely new links is a highly active area of both academic and commercial interest.
+
+
+{\bf Technological \& infrastructure networks:} 
+
+These are networks with physical links between nodes. Examples include the internet (undirected); electricity grids (partly directed) perhaps also including the computers that control the grid; road, rail, shipping, or air transport networks; and electronic circuits. 
+
+
+{\bf Biological networks:} 
+
+These networks span multiple scales, from networks of interactions between proteins and their metabolites, or genes and proteins (both directed) that are used amongst other things, in the study of disease through to networks of interactions between species. The latter includes food webs (directed) and mutualistic networks like pollination networks (bipartite, directed). Neural networks are another example that is an active area of study; the complete neural network (282 neurons) is known for the nematode C. Elegans. Studying bigger brains, however, requires bigger brains. Though not entirely biological, I'll include in this class a couple of examples of physical networks. These are networks linking free energy minima of glasses via the saddle points on the energy surface that they sit on and networks linking confirmations of polymers when they can transition between a pair of structures. 
+
+
+\subsection*{Properties of networks}
+
+{\bf Small world effect:}
+
+One of the best know network properties is the \emph{small world effect}. This gets it name from a famous experiment in the 1960s by the sociologist Stanley Milgram. In the experiment, letters were passed from person to person until they reached a designated target person. Milgram found that it took on average only about six hops for the letters to reach their destination leading to the so called \emph{six degrees of separation} phenomenon. This small world effect is an example of how particular network structures can provide short paths through the network connecting most pairs of nodes. 
+
+The mean geodesic path length for an undirected network is given by
+$$
+	L =\frac{1}{\frac12 n(n-1)}\sum_{i\geq j} d_{ij}
+$$
+where $d_{ij}$ is the geodesic distance between $v_i$ and $v_j$. In the case of disconnected networks, one must make a choice about how to count the contribution of pairs of nodes that are not connected. The Facebook friendship network is one of the best examples of a small world network. Despite have around 1 billion nodes and 100 billion links (i.e. a mean degree of 100) the mean geodesic distance for the Facebook network is only around four.
+
+{\bf Transitivity/clustering:}
+
+In mathematics, a set with a relationship $\sim$ is transitive if $a \sim b,~b\sim c \implies a \sim c$. In the context of networks the relationship means "is connected to". If a network is entirely transitive, then it would consist of totally connected components. More interesting is to measure how close a network is to being transitive by looking at how much clustering it has.
+
+The \emph{global clustering coefficient} for a network is defined as
+$$
+	C=\frac{3\times\text{\# of triangle}}{\text{\# number of connected triples}}
+$$
+where a connected triple is a vertex with connections tow two other vertices.
+
+It is sometime interesting to look at how the clustery-ness of a network varies over the network, perhaps to study how clustering depends on some node property. To look at this, we use the \emph{local clustering coefficient} for a vertex $v_i$:
+$$
+	C_i = \frac{\text{\# triangle connected to }v_i}{\text{\# triples centered on }v_i}.
+$$
+Clearly, $C = \frac{1}{N}\sum_{i=1}^NC_i$.
+
+Now that we've defined the clustering coefficient, we can look a little closer at the small world property.
+If we start with a completely regular network (figure \ref{fig1}a) where each node has the same degree $k$ and is connected to its $k$ nearest neighbours we will have a high clustering coefficient, but a relatively long mena geodesic path. If we start to introduce random re-wirings of the network, with probability $p$, by either switching an end of an existing edge (figure \ref{fig1}b) or by introducing new random links (figure \ref{fig1}c), then we find that the mean geodesic path length drops quickly, while the mean clustering coefficient remains close to its original value as the re-wiring probability $p$ increases --- see figure \ref{fig2}. This means that while the long-range connections rapidly reduce the \emph{global} mean path geodesic length, any change to the \emph{local} structure is barely perceptible.
+
+\begin{figure}
+	\begin{center}
+		\includegraphics[width = 12cm]{regularNW.png}
+	\end{center}
+	\caption{}
+	\label{fig1}
+\end{figure}
+
+\begin{figure}
+	\begin{center}
+		\includegraphics[width = 8cm]{smallWorld.png}
+	\end{center}
+	\caption{Mean geodesic path length (solid line) and mean clustering coefficient (dashed line) as a function of the rewiring probability $p$, and measured relative to their maximum value, i.e. with no re-wiring.}
+	\label{fig2}
+\end{figure}
+
+
+{\bf Degree distribution:}
+
+The degree $k$ of a vertex is the number of edges that connect to that vertex. We write $p_k$ for the fraction of nodes in a network that have degree $k$, this is also the probability that a randomly selected node has degree $k$. One of the interesting properties of real-world networks is the degree distribution --- the histogram of $p_k$ as a function of $k$. For a network with uniformly random connections between nodes, the degree distribution is Poisson. This is not the case for most real-world networks --- these tend to have degree distributions that are highly right-skewed. In particular, many real-world networks tend to have a \emph{heavy-tail} --- a probability distribution that has a non-negligible probability of getting values much greater than the mean. In fact, the mean (and higher order moments like the variance) may not even be well defined for all heavy-tailed distributions.  Of particular interest is the case where the degree distribution is a \emph{power-law} or \emph{scale-free}. That is
+$$
+ p_k \sim k^{-\gamma}.
+$$
+
+Such degree distributions show up surprisingly often in real world networks: the WWW, the internet, metabolic networks, telephone call networks, and sexual contact networks. Power law degree distributions also arise from one of the most popular models for generating networks --- we'll see more on this later.
+
+An alternative (i.e. non-power-law) distribution that is still heavy-tailed is the \emph{exponential distribution}
+$$
+	p_k\sim\exp(-k/\kappa).
+$$
+
+Power-law and exponential distributions are easily identified in data: they give a straight line on log-log and semi-log axes, respectively.
+
+The probability generating functions that we introduced at the start of the course give a useful way of calculating network properties from their degree distributions. For example, if $G_0(x) = \sum_{k=0}^\infty p_kx^k$ is the PGF for the degree distribution of a network, it is not hard to find a new PGF for the number of second neighbours of nodes in a network. This, in turn, is close to the PGF for the degree distribution of the projection of a bipartite network, since the second neighbours of a bipartite network are the neighbours of its projection.
+
+%{\bf Resilience \& robustness}
+%{\bf Mixing \& homophilly}
+%{\bf degree correlation}
+%{\bf Community structure}
+
+\subsection*{Exponential random graph models}
+Given a particular empirical network one often wants to create models of networks with similar observable properties. These observables might be any of the properties mention so far (or many others) such as mean clustering or a particular degree distribution. One approach is to consider the empirical network as one example of a network from an ensemble of networks that have been generated by the same underlying model. Exponential random graph models (ERGMs) provide a way to study the properties of such models by employing methods that come directly from the statistical mechanics that we have seen so far.
+
+Consider a set $\mathcal{G}$ of graphs and a collection of observables $\{X_i\},~~i=1,2,\ldots,r$ for which we have measured expected values $\langle X_i\rangle$. It will often turn out that we only have a single measurement of these values. (Here we'll assume that the graphs in $\mathcal{G}$ are simple graphs, but the same approach works for many other possibilities.) Given a specific graph $G\in\mathcal{G}$ we want $P(G)$ the probability of finding that graph to be commensurate with the expected values of each of the graph observables $\{X_i\}$. Just like for statistical  mechanics, this is an under-determined problem: the number of degrees of freedom for the definition of $P(G)$ is much smaller than the number of constraints from the observables. However, as we know from statistical mechanics, the best approach is to pick the solution that maximises the Gibbs entropy
+$$
+	S= -\sum_{G\in\mathcal{G}}P(G)\ln P(G),
+$$
+subject to the constraints
+$$
+	\sum_G P(G)X_i(G) = \langle X_i\rangle
+$$
+and the normalization condition
+$$
+	\sum_G P(G) =1.
+$$
+
+To do this, we introduce the Lagrange multipliers $\alpha$ and $\theta_i$ and solve
+$$
+	\frac{\partial}{\partial P(G)}\left[S + \alpha \left(1-\sum_G P(G)\right) + \sum_i \theta_i \left(\langle X_i \rangle - \sum_G P(G)X_i(G)\right) \right] = 0
+$$
+for all graphs $G$.
+
+This gives
+$$
+	\ln P(G) +1 +\alpha +\sum_i\theta_iX_i(G) = 0.
+$$
+
+We can rearrange this to get
+$$
+	P(G) = \frac{\exp(-H(G))}{Z},
+$$
+where $H(G) = \sum_i\theta_iX_i(G)$ is known as the graph Hamiltonian and $Z = \exp(\alpha+1)$ is the partition function. The requirement that $Z$ be a normalising factor requires that $\exp(\alpha+1) = \exp(-H(G))$.
+
+\subsection*{Network growth models}
+It is one thing to be able to produce a network, fully formed, with a particular set of properties. It is quite another to prescribe a process that is able to grow, or generate, a network with those same properties.
+
+One popular generative network model is the \emph{preferential attachment plus growth model} (PAGP model), also known as the Barabasi and Albert or BA model.
+
+As the name suggests, at each time step, the PAPG model adds a node with degree $m$. Each of the edges of the new node attaches itself to a node in the existing network with a probability that is proportionate to the degree of the existing nodes. The edges in this model are undirected and once and edge is attached to a node, there is no re-wiring. It isn't too hard to prove that the PAPG model generates graphs with a power law degree distribution with $p_k \sim k^{-3}$. The fact that the power law exponent is fixed is unfortunate, though generalisation of the PAPG model allow for different exponents. It is also not hard to see that the PAPG model only produces connected graphs. This limits its applicability to some real world networks. Even though the PAPG model manages to grow networks that reproduce some real-world features (the power-law degree distribution), it does so in a way that may not match up with the growth processes of those real-world networks. For example the highest degree nodes of the PAPG model are the oldest nodes --- this is not the case with networks such as the WWW to which the PAPG model might be applied.
+
+\subsection*{Recommended reading}
+To come...
+
 
 
 
